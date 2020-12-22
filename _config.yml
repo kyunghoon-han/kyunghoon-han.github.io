@@ -30,7 +30,7 @@ instagram_username: k_han90
 github_username:  kyunghoon-han
 
 # Build settings
-theme: minima
+theme: minima #jekyll-theme-hacker
 plugins:
   - jekyll-feed
 

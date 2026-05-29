@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>KH's Personal Site</title>
+  <link rel="icon" type="image/x-icon" href="favicon.ico" />
+  <link rel="stylesheet" href="https://unpkg.com/98.css" />
+  <link rel="stylesheet" href="styles.css" />
+
+  <script>
+    window.MathJax = {
+      tex: {
+        inlineMath:    [['\\(', '\\)']],
+        displayMath:   [['$$', '$$'], ['\\[', '\\]']],
+        processEscapes: true,
+        processEnvironments: true,
+        tags: 'none',
+        packages: { '[+]': ['ams', 'noerrors', 'noundefined'] }
+      },
+      options: {
+        skipHtmlTags: ['script', 'noscript', 'style', 'textarea', 'pre', 'code'],
+        enableMenu: false
+      },
+      loader: { load: ['[tex]/ams', '[tex]/noerrors', '[tex]/noundefined'] }
+    };
+  </script>
+  <script async src="https://cdn.jsdelivr.net/npm/mathjax@3/es5/tex-mml-chtml.js"></script>
+</head>
+<body>
+  <div id="taskbar">
+    <button id="start-button" class="start-btn">
+      <span class="start-logo"></span>
+      <span class="start-text">Start</span>
+    </button>
+    <div class="taskbar-separator"></div>
+    <div id="taskbar-quick" class="taskbar-quick"></div>
+    <div class="taskbar-separator"></div>
+    <div id="taskbar-windows"></div>
+    <div id="taskbar-tray">
+      <span id="clock"></span>
+    </div>
+  </div>
+
+  <div id="desktop">
+    <div class="desktop-icons" id="desktop-icons"></div>
+    <div id="windows"></div>
+  </div>
+
+  <div id="start-menu" class="hidden">
+    <div class="start-menu-side">
+      <div class="start-menu-avatar"></div>
+      <span class="start-menu-side-text">KH's Personal Site</span>
+    </div>
+    <ul class="start-menu-list" id="start-menu-list"></ul>
+  </div>
+
+  <script src="https://cdn.jsdelivr.net/npm/marked@13.0.3/marked.min.js"></script>
+  <script src="content.js"></script>
+  <script src="script.js"></script>
+</body>
+</html>

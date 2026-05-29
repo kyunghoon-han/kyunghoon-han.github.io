@@ -1,0 +1,501 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>FIMD Artificial Chemistry – Darwinian Selection in Frequency Space</title>
+<style>
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  body { background: #080b12; color: #c8d6e5; font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Courier New', monospace; overflow-x: hidden; }
+  canvas { display: block; }
+  button { font-family: inherit; cursor: pointer; border: none; border-radius: 4px; padding: 5px 12px; font-size: 11px; font-weight: 600; color: #fff; letter-spacing: 0.3px; }
+  button:hover { filter: brightness(1.15); }
+  .panel { border: 1px solid rgba(100,180,255,0.08); border-radius: 6px; background: #0c1019; }
+  .ctrl-row { display:flex; align-items:center; gap:6px; margin-bottom:6px; }
+  .ctrl-row label { font-size:10px; color:#718096; min-width:120px; }
+  .ctrl-row input[type=range] { background:#1a202c; border:1px solid #2d3748; border-radius:3px; color:#a0aec0; font-family:inherit; font-size:10px; padding:2px 4px; width:100px; }
+  .ctrl-row .val { font-size:10px; color:#a0aec0; min-width:40px; }
+  .tab-btn { padding:4px 10px; font-size:10px; border-radius:3px 3px 0 0; background:#1a202c; color:#718096; border:1px solid #2d3748; border-bottom:none; cursor:pointer; }
+  .tab-btn.active { background:#0c1019; color:#e2e8f0; border-color:rgba(100,180,255,0.15); }
+</style>
+</head>
+<body>
+<div id="app" style="max-width:1280px;margin:0 auto;padding:12px;"></div>
+<script>
+var P = {
+  boxW: 780, boxH: 440,
+  initialSpecies: 25, initialPopPerSpecies: 12,
+  maxSpecies: 500, maxPop: 500, minPop: 40,
+  collisionR: 9, reactionProb: 0.12,
+  decayRate: 0.0003, envReactRate: 0.0008, speedFactor: 1.4,
+  freqMin: 30, freqMax: 600, freqTolerance: 15,
+  csvInterval: 50, simSpeed: 3,
+};
+var CHART_H = 160, TREE_H = 220, PHASE_DT = 0.002;
+var SIMPLE_RATIOS = [1/3,1/2,2/3,3/4,1,4/3,3/2,2,3];
+var PALETTE = [
+  "#ff6b6b","#ffd93d","#6bcb77","#4d96ff","#ff922b","#cc5de8","#20c997","#ff6b9d","#a9e34b","#74c0fc",
+  "#f06595","#fcc419","#38d9a9","#748ffc","#e8590c","#be4bdb","#12b886","#e64980","#94d82d","#4dabf7",
+  "#f76707","#9775fa","#099268","#d6336c","#66a80f","#5c7cfa","#e03131","#ae3ec9","#0ca678","#c2255c",
+  "#5c940d","#4263eb","#ff8787","#da77f2","#63e6be","#91a7ff","#ffa94d","#b197fc","#96f2d7","#a5d8ff",
+  "#ffdeeb","#fff3bf","#d3f9d8","#dbe4ff","#ffe8cc","#f3d9fa","#c3fae8","#ffc9c9","#e9fac8","#bac8ff"
+];
+var ENV_MOLECULES = [
+  {name:"H\u2082O",boost:40},{name:"CO\u2082",boost:70},{name:"NH\u2083",boost:55},
+  {name:"H\u2082S",boost:30},{name:"CH\u2084",boost:25},{name:"Fe\u00B2\u207A",boost:15},
+  {name:"PO\u2084\u00B3\u207B",boost:45},{name:"SO\u2084\u00B2\u207B",boost:35},
+];
+var PREFIXES=["Proto","Thio","Phospho","Carbo","Nitro","Silico","Ferro","Lipido","Glyco","Aldo",
+  "Amino","Keto","Oxo","Sulfo","Cyano","Boro","Seleno","Arseno","Halo","Methyl",
+  "Ethyl","Vinyl","Phenyl","Pyro","Cryo","Hydro","Aero","Geo","Helio","Chromo"];
+var SUFFIXES=["acid","amine","chain","ring","dimer","frame","cluster","tail","ester","ether",
+  "one","al","yl","ose","ite","ate","ide","ane","ene","yne",
+  "ol","thiol","nitrile","amide","oxide","base","salt","gel","mer","plast"];
+
+function randName(){return PREFIXES[Math.floor(Math.random()*PREFIXES.length)]+"-"+SUFFIXES[Math.floor(Math.random()*SUFFIXES.length)];}
+function col(id){return PALETTE[id%PALETTE.length];}
+function randFreq(){return Math.round(P.freqMin+(Math.random()*(P.freqMax-P.freqMin)));}
+function resonance(f1,f2){if(!f1||!f2)return 0;var r=Math.min(f1,f2)/Math.max(f1,f2),best=Infinity;for(var k=0;k<SIMPLE_RATIOS.length;k++)best=Math.min(best,Math.abs(r-SIMPLE_RATIOS[k]));return Math.exp(-best*12);}
+function phaseAlign(m1,m2){var a=0,c=0;for(var i=0;i<m1.modes.length;i++)for(var j=0;j<m2.modes.length;j++){a+=Math.cos(Math.atan2(m1.modes[i].pi,m1.modes[i].freq*m1.modes[i].q)-Math.atan2(m2.modes[j].pi,m2.modes[j].freq*m2.modes[j].q));c++;}return c?(a/c+1)/2:0.5;}
+function angleFactor(m1,m2){var dx=m2.x-m1.x,dy=m2.y-m1.y,dvx=m2.vx-m1.vx,dvy=m2.vy-m1.vy;var d=Math.sqrt(dx*dx+dy*dy)||1,v=Math.sqrt(dvx*dvx+dvy*dvy)||1;return Math.max(0,-(dx*dvx+dy*dvy)/(d*v));}
+function advPhase(mol){for(var i=0;i<mol.modes.length;i++){var m=mol.modes[i],w=m.freq*0.01,c=Math.cos(w*PHASE_DT),s=Math.sin(w*PHASE_DT);var nq=m.q*c+(m.pi/(w||1))*s,np=m.pi*c-w*m.q*s;m.q=nq;m.pi=np;}}
+function prodFreqs(f1s,f2s,boost){var all=f1s.concat(f2s);var pick=function(){return all[Math.floor(Math.random()*all.length)];};var a=pick(),b=pick();var ops=[function(){return(a+b)/2+(Math.random()-.5)*30;},function(){return Math.abs(a-b)+20+(Math.random()-.5)*20;},function(){return a*.7+b*.3+(Math.random()-.5)*25;},function(){return(a+b)/2+boost*(Math.random()-.3);}];var mk=function(){return Math.max(P.freqMin,Math.min(P.freqMax,ops[Math.floor(Math.random()*ops.length)]()));};var nModes=Math.random()<0.15?3:2;var out=[];for(var i=0;i<nModes;i++)out.push(Math.round(mk()));return out.sort(function(x,y){return x-y;});}
+function findSpecies(reg,freqs){for(var i=0;i<reg.length;i++){if(reg[i].freqs.length!==freqs.length)continue;var ok=true;for(var j=0;j<freqs.length;j++)if(Math.abs(reg[i].freqs[j]-freqs[j])>P.freqTolerance){ok=false;break;}if(ok)return reg[i];}return null;}
+function mkMol(id,sid,freqs){return{id:id,speciesId:sid,x:Math.random()*P.boxW,y:Math.random()*P.boxH,vx:(Math.random()-.5)*P.speedFactor,vy:(Math.random()-.5)*P.speedFactor,modes:freqs.map(function(f){return{freq:f,q:(Math.random()-.5)*.1,pi:(Math.random()-.5)*.1*f};}),energy:1,age:0};}
+function wrapX(x){x=x%P.boxW;return x<0?x+P.boxW:x;}
+function wrapY(y){y=y%P.boxH;return y<0?y+P.boxH:y;}
+function buildGrid(mols,cellSize){var cols=Math.ceil(P.boxW/cellSize);var rows=Math.ceil(P.boxH/cellSize);var grid=new Array(cols*rows);for(var i=0;i<grid.length;i++)grid[i]=[];for(var i=0;i<mols.length;i++){var cx=Math.floor(mols[i].x/cellSize)%cols;var cy=Math.floor(mols[i].y/cellSize)%rows;if(cx<0)cx+=cols;if(cy<0)cy+=rows;grid[cy*cols+cx].push(i);}return{grid:grid,cols:cols,rows:rows};}
+
+var sim,running=false,popHistory=[],csvData=[],events=[],selectedSp=null;
+
+function initSim(){
+  var species=[];
+  for(var i=0;i<P.initialSpecies;i++){var nModes=Math.random()<0.2?3:2;var freqs=[];for(var k=0;k<nModes;k++)freqs.push(randFreq());freqs.sort(function(a,b){return a-b;});species.push({id:i,name:randName(),freqs:freqs,parent:null,birthStep:0,depth:0});}
+  var mols=[],mid=0;
+  for(var i=0;i<species.length;i++)for(var j=0;j<P.initialPopPerSpecies;j++)mols.push(mkMol(mid++,species[i].id,species[i].freqs));
+  sim={species:species,mols:mols,nid:mid,nsid:species.length,step:0,reactions:0,speciation:0};
+  popHistory=[];csvData=[];events=[];selectedSp=null;
+}
+
+function getDepth(sp){
+  // Memoized depth from primordial ancestor
+  if(sp._depth!==undefined) return sp._depth;
+  if(!sp.parent){sp._depth=0;return 0;}
+  var maxD=0;
+  for(var i=0;i<sp.parent.length;i++){
+    if(sp.parent[i]===-1) continue;
+    var p=null;for(var j=0;j<sim.species.length;j++)if(sim.species[j].id===sp.parent[i]){p=sim.species[j];break;}
+    if(p) maxD=Math.max(maxD,getDepth(p)+1);
+  }
+  sp._depth=maxD;return maxD;
+}
+
+function stepSim(){
+  var m=sim.mols;
+  for(var s=0;s<P.simSpeed;s++){
+    sim.step++;
+    for(var i=0;i<m.length;i++){m[i].x=wrapX(m[i].x+m[i].vx);m[i].y=wrapY(m[i].y+m[i].vy);advPhase(m[i]);m[i].age++;m[i].energy-=P.decayRate;}
+    var cellSize=P.collisionR*2.5;var g=buildGrid(m,cellSize);var cols=g.cols,rows=g.rows,grid=g.grid;
+    var rmSet={},add=[],collided={};
+    for(var cy=0;cy<rows;cy++){for(var cx=0;cx<cols;cx++){for(var dy=-1;dy<=1;dy++){for(var dx=-1;dx<=1;dx++){
+      var nx=(cx+dx+cols)%cols,ny=(cy+dy+rows)%rows;
+      var cellA=grid[cy*cols+cx],cellB=grid[ny*cols+nx];
+      var sameCell=(cx===nx&&cy===ny);
+      for(var ai=0;ai<cellA.length;ai++){var i=cellA[ai];if(rmSet[i]||collided[i])continue;
+        var startBi=sameCell?ai+1:0;
+        for(var bi=startBi;bi<cellB.length;bi++){var j=cellB[bi];if(i===j||rmSet[j]||collided[j])continue;
+          var ddx=m[j].x-m[i].x,ddy=m[j].y-m[i].y;
+          if(ddx>P.boxW/2)ddx-=P.boxW;if(ddx<-P.boxW/2)ddx+=P.boxW;if(ddy>P.boxH/2)ddy-=P.boxH;if(ddy<-P.boxH/2)ddy+=P.boxH;
+          var dist=Math.sqrt(ddx*ddx+ddy*ddy);if(dist>=P.collisionR)continue;
+          collided[i]=true;collided[j]=true;
+          var s1=null,s2=null;for(var si=0;si<sim.species.length;si++){if(sim.species[si].id===m[i].speciesId)s1=sim.species[si];if(sim.species[si].id===m[j].speciesId)s2=sim.species[si];if(s1&&s2)break;}
+          if(!s1||!s2)continue;
+          var mr=0;for(var fi=0;fi<s1.freqs.length;fi++)for(var fj=0;fj<s2.freqs.length;fj++)mr=Math.max(mr,resonance(s1.freqs[fi],s2.freqs[fj]));
+          var prob=mr*.4+phaseAlign(m[i],m[j])*.3+angleFactor(m[i],m[j])*.3;
+          if(Math.random()<prob*P.reactionProb){
+            var env=ENV_MOLECULES[Math.floor(Math.random()*ENV_MOLECULES.length)];
+            var getOrMake=function(freqs,sp1,sp2){
+              var sp=findSpecies(sim.species,freqs);
+              if(!sp&&sim.species.length<P.maxSpecies){
+                var d1=sp1._depth!==undefined?sp1._depth:0;var d2=sp2._depth!==undefined?sp2._depth:0;
+                sp={id:sim.nsid++,name:randName(),freqs:freqs,parent:[sp1.id,sp2.id],birthStep:sim.step,depth:Math.max(d1,d2)+1,_depth:Math.max(d1,d2)+1};
+                sim.species.push(sp);sim.speciation++;
+                events.unshift("\u26A1 "+sp.name+" ["+freqs+"] from "+sp1.name+"+"+sp2.name+" ("+env.name+")");
+                if(events.length>60)events.length=60;
+              }
+              return sp||(Math.random()<.5?sp1:sp2);
+            };
+            var ps1=getOrMake(prodFreqs(s1.freqs,s2.freqs,env.boost),s1,s2);
+            var ps2=getOrMake(prodFreqs(s1.freqs,s2.freqs,env.boost),s1,s2);
+            rmSet[i]=true;rmSet[j]=true;sim.reactions++;
+            var mx=(m[i].x+m[j].x)/2,my=(m[i].y+m[j].y)/2;
+            var n1=mkMol(sim.nid++,ps1.id,ps1.freqs),n2=mkMol(sim.nid++,ps2.id,ps2.freqs);
+            var sa=Math.random()*Math.PI*2,sd=P.collisionR*0.8,spd=P.speedFactor*0.8;
+            n1.x=wrapX(mx+Math.cos(sa)*sd);n1.y=wrapY(my+Math.sin(sa)*sd);n1.vx=Math.cos(sa)*spd;n1.vy=Math.sin(sa)*spd;
+            n2.x=wrapX(mx-Math.cos(sa)*sd);n2.y=wrapY(my-Math.sin(sa)*sd);n2.vx=-Math.cos(sa)*spd;n2.vy=-Math.sin(sa)*spd;
+            add.push(n1,n2);
+          }else{
+            var nrmx=ddx/(dist||1),nrmy=ddy/(dist||1);var rv=(m[j].vx-m[i].vx)*nrmx+(m[j].vy-m[i].vy)*nrmy;
+            if(rv<0){m[i].vx+=rv*nrmx;m[i].vy+=rv*nrmy;m[j].vx-=rv*nrmx;m[j].vy-=rv*nrmy;}
+            var overlap=P.collisionR-dist;if(overlap>0){var pd=(overlap/2)+0.5;m[i].x=wrapX(m[i].x-nrmx*pd);m[i].y=wrapY(m[i].y-nrmy*pd);m[j].x=wrapX(m[j].x+nrmx*pd);m[j].y=wrapY(m[j].y+nrmy*pd);}
+          }
+        }
+      }
+    }}}}
+    var envAdd=[];
+    for(var i=0;i<m.length;i++){if(rmSet[i]||Math.random()>=P.envReactRate)continue;
+      var sp=null;for(var si=0;si<sim.species.length;si++)if(sim.species[si].id===m[i].speciesId){sp=sim.species[si];break;}
+      if(!sp)continue;var env2=ENV_MOLECULES[Math.floor(Math.random()*ENV_MOLECULES.length)];
+      var pf=prodFreqs(sp.freqs,sp.freqs,env2.boost*2);var ps=findSpecies(sim.species,pf);
+      if(!ps&&sim.species.length<P.maxSpecies){var d0=sp._depth!==undefined?sp._depth:0;ps={id:sim.nsid++,name:randName(),freqs:pf,parent:[sp.id,-1],birthStep:sim.step,depth:d0+1,_depth:d0+1};sim.species.push(ps);sim.speciation++;events.unshift("\uD83C\uDF0A "+ps.name+" ["+pf+"] from "+sp.name+"+"+env2.name);if(events.length>60)events.length=60;}
+      if(ps&&m.length+add.length+envAdd.length<P.maxPop){var nm=mkMol(sim.nid++,ps.id,ps.freqs);nm.x=wrapX(m[i].x+(Math.random()-.5)*20);nm.y=wrapY(m[i].y+(Math.random()-.5)*20);envAdd.push(nm);}
+    }
+    var rmCount=0;for(var k in rmSet)rmCount++;
+    for(var i=0;i<m.length;i++)if(!rmSet[i]&&m[i].energy<=0&&m.length-rmCount+add.length+envAdd.length>P.minPop){rmSet[i]=true;rmCount++;}
+    var surviving=[];for(var i=0;i<m.length;i++)if(!rmSet[i])surviving.push(m[i]);
+    sim.mols=surviving.concat(add).concat(envAdd);
+    while(sim.mols.length>P.maxPop)sim.mols.splice(Math.floor(Math.random()*sim.mols.length),1);
+    while(sim.mols.length<P.minPop){var rsp=sim.species[Math.floor(Math.random()*Math.min(P.initialSpecies,sim.species.length))];sim.mols.push(mkMol(sim.nid++,rsp.id,rsp.freqs));}
+    m=sim.mols;
+  }
+  if(sim.step%P.csvInterval<P.simSpeed){var c={};for(var i=0;i<sim.mols.length;i++)c[sim.mols[i].speciesId]=(c[sim.mols[i].speciesId]||0)+1;popHistory.push({step:sim.step,counts:c});if(popHistory.length>400)popHistory.shift();csvData.push({step:sim.step,counts:Object.assign({},c)});}
+}
+
+function exportCSV(){
+  if(!csvData.length){alert("No data yet.");return;}
+  var allIds={};for(var i=0;i<csvData.length;i++)for(var k in csvData[i].counts)allIds[k]=true;
+  var ids=Object.keys(allIds).map(Number).sort(function(a,b){return a-b;});
+  var header=["step"];for(var i=0;i<ids.length;i++){var sp=null;for(var j=0;j<sim.species.length;j++)if(sim.species[j].id===ids[i]){sp=sim.species[j];break;}header.push(sp?(sp.name+"_id"+sp.id+"_["+sp.freqs.join(";")+"]"):("Sp-"+ids[i]));}
+  var lines=[header.join(",")];for(var r=0;r<csvData.length;r++){var row=[csvData[r].step];for(var i=0;i<ids.length;i++)row.push(csvData[r].counts[ids[i]]||0);lines.push(row.join(","));}
+  var blob=new Blob([lines.join("\n")],{type:"text/csv"});var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="fimd_population_step"+sim.step+".csv";a.click();
+}
+
+// ===================== TREE OF LIFE =====================
+
+function buildLineageTree(){
+  // For each species, compute depth (longest chain to primordial)
+  // Clear memoized
+  for(var i=0;i<sim.species.length;i++) delete sim.species[i]._depth;
+  for(var i=0;i<sim.species.length;i++) getDepth(sim.species[i]);
+
+  // Find which species are currently alive
+  var alive={};for(var i=0;i<sim.mols.length;i++)alive[sim.mols[i].speciesId]=true;
+
+  // Find the top N deepest alive species (these are the longest lineages still surviving)
+  var aliveSpecies=[];
+  for(var i=0;i<sim.species.length;i++)if(alive[sim.species[i].id])aliveSpecies.push(sim.species[i]);
+  aliveSpecies.sort(function(a,b){return(b._depth||0)-(a._depth||0);});
+  var topLeaves=aliveSpecies.slice(0,8);
+
+  if(topLeaves.length===0) return {nodes:[],edges:[],maxDepth:0,maxStep:sim.step};
+
+  // Trace ancestry for each leaf
+  var nodesMap={};
+  var edges=[];
+
+  function traceBack(sp){
+    if(nodesMap[sp.id]) return;
+    nodesMap[sp.id]={sp:sp,isAlive:!!alive[sp.id]};
+    if(!sp.parent) return;
+    for(var i=0;i<sp.parent.length;i++){
+      var pid=sp.parent[i];
+      if(pid===-1) continue;
+      var psp=null;for(var j=0;j<sim.species.length;j++)if(sim.species[j].id===pid){psp=sim.species[j];break;}
+      if(psp){
+        edges.push({from:psp.id,to:sp.id});
+        traceBack(psp);
+      }
+    }
+  }
+
+  for(var i=0;i<topLeaves.length;i++) traceBack(topLeaves[i]);
+
+  var nodes=[];for(var k in nodesMap) nodes.push(nodesMap[k]);
+  var maxDepth=0;for(var i=0;i<nodes.length;i++)maxDepth=Math.max(maxDepth,nodes[i].sp._depth||0);
+
+  return {nodes:nodes,edges:edges,maxDepth:maxDepth,maxStep:sim.step};
+}
+
+function renderTree(){
+  var dpr=window.devicePixelRatio||1;
+  var cw=treeCvs.clientWidth||P.boxW;
+  treeCvs.width=cw*dpr;treeCvs.height=TREE_H*dpr;
+  treeCtx.setTransform(dpr,0,0,dpr,0,0);
+  treeCtx.fillStyle="#090d15";treeCtx.fillRect(0,0,cw,TREE_H);
+
+  var tree=buildLineageTree();
+  if(tree.nodes.length===0){
+    treeCtx.fillStyle="#4a5568";treeCtx.font="11px monospace";treeCtx.textAlign="center";
+    treeCtx.fillText("Tree of Life — lineages appear as species evolve...",cw/2,TREE_H/2);
+    return;
+  }
+
+  var ml=50,mr=20,mt=24,mb=18;
+  var w=cw-ml-mr,h=TREE_H-mt-mb;
+  var maxDepth=Math.max(tree.maxDepth,1);
+
+  // Title
+  treeCtx.fillStyle="#718096";treeCtx.font="bold 10px monospace";treeCtx.textAlign="left";
+  treeCtx.fillText("TREE OF LIFE — Longest surviving lineages (depth = generations from primordial)",ml,14);
+
+  // Assign x by depth, y by position within that depth layer
+  var depthBuckets={};
+  for(var i=0;i<tree.nodes.length;i++){
+    var d=tree.nodes[i].sp._depth||0;
+    if(!depthBuckets[d]) depthBuckets[d]=[];
+    depthBuckets[d].push(tree.nodes[i]);
+  }
+
+  var posMap={};// id -> {x,y}
+  for(var d=0;d<=maxDepth;d++){
+    var bucket=depthBuckets[d];
+    if(!bucket) continue;
+    var x=ml+(d/maxDepth)*w;
+    var n=bucket.length;
+    for(var i=0;i<n;i++){
+      var y=mt+(i+0.5)/(n)*h;
+      posMap[bucket[i].sp.id]={x:x,y:y};
+    }
+  }
+
+  // Draw edges
+  for(var i=0;i<tree.edges.length;i++){
+    var e=tree.edges[i];
+    var from=posMap[e.from],to=posMap[e.to];
+    if(!from||!to) continue;
+    treeCtx.strokeStyle="rgba(255,255,255,0.08)";treeCtx.lineWidth=1;
+    treeCtx.beginPath();
+    // Bezier curve for nice branch look
+    var midX=(from.x+to.x)/2;
+    treeCtx.moveTo(from.x,from.y);
+    treeCtx.bezierCurveTo(midX,from.y,midX,to.y,to.x,to.y);
+    treeCtx.stroke();
+
+    // Color overlay
+    treeCtx.strokeStyle=col(e.to)+"40";treeCtx.lineWidth=1.5;
+    treeCtx.beginPath();
+    treeCtx.moveTo(from.x,from.y);
+    treeCtx.bezierCurveTo(midX,from.y,midX,to.y,to.x,to.y);
+    treeCtx.stroke();
+  }
+
+  // Draw nodes
+  for(var i=0;i<tree.nodes.length;i++){
+    var nd=tree.nodes[i],p=posMap[nd.sp.id];
+    if(!p) continue;
+    var r=nd.isAlive?4:2.5;
+    var c=col(nd.sp.id);
+
+    // Glow for alive
+    if(nd.isAlive){
+      treeCtx.beginPath();treeCtx.arc(p.x,p.y,r+4,0,Math.PI*2);
+      treeCtx.fillStyle=c+"18";treeCtx.fill();
+    }
+
+    treeCtx.beginPath();treeCtx.arc(p.x,p.y,r,0,Math.PI*2);
+    treeCtx.fillStyle=nd.isAlive?c:c+"80";
+    treeCtx.fill();
+
+    // Label for leaf nodes (alive and deep) or primordial
+    if(nd.isAlive || !nd.sp.parent){
+      treeCtx.fillStyle=nd.isAlive?"#e2e8f0":"#4a5568";
+      treeCtx.font=(nd.isAlive?"bold ":"")+"8px monospace";
+      treeCtx.textAlign=nd.sp.parent?"left":"right";
+      var lx=nd.sp.parent?p.x+r+3:p.x-r-3;
+      treeCtx.fillText(nd.sp.name,lx,p.y+3);
+    }
+  }
+
+  // Depth axis labels
+  treeCtx.fillStyle="#4a5568";treeCtx.font="8px monospace";treeCtx.textAlign="center";
+  var nTicks=Math.min(maxDepth,10);
+  for(var i=0;i<=nTicks;i++){
+    var d=Math.round(i*maxDepth/nTicks);
+    var x=ml+(d/maxDepth)*w;
+    treeCtx.fillText("gen "+d,x,TREE_H-4);
+  }
+}
+
+// ===================== DOM =====================
+
+var app=document.getElementById("app");
+function buildUI(){
+  app.innerHTML=
+  '<div style="display:flex;align-items:baseline;gap:12px;margin-bottom:10px;flex-wrap:wrap">'+
+    '<h1 style="font-size:17px;font-weight:700;color:#e2e8f0;letter-spacing:.5px">FIMD Artificial Chemistry</h1>'+
+    '<span style="font-size:10px;color:#4a5568">Darwinian selection in vibrational frequency space \u00B7 Early Earth</span>'+
+  '</div>'+
+  '<div style="display:flex;gap:10px;flex-wrap:wrap">'+
+    '<div style="flex:1 1 700px;min-width:0">'+
+      '<div class="panel" style="border-color:rgba(100,180,255,0.12);overflow:hidden;margin-bottom:8px">'+
+        '<canvas id="simCanvas" style="width:'+P.boxW+'px;height:'+P.boxH+'px"></canvas>'+
+      '</div>'+
+      '<div id="topBar" style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap"></div>'+
+      '<div class="panel" style="padding:6px;height:'+(CHART_H+14)+'px;margin-bottom:8px">'+
+        '<canvas id="chartCanvas" style="width:100%;height:'+CHART_H+'px"></canvas>'+
+      '</div>'+
+      '<div class="panel" style="padding:6px;height:'+(TREE_H+8)+'px;margin-bottom:8px">'+
+        '<canvas id="treeCanvas" style="width:100%;height:'+TREE_H+'px"></canvas>'+
+      '</div>'+
+    '</div>'+
+    '<div style="flex:0 0 310px;min-width:290px">'+
+      '<div id="tabBar" style="display:flex;gap:2px;margin-bottom:0"></div>'+
+      '<div id="rightContent"></div>'+
+    '</div>'+
+  '</div>'+
+  '<div style="margin-top:8px;padding:6px 12px;background:rgba(56,161,105,0.06);border-radius:6px;border:1px solid rgba(56,161,105,0.12);font-size:10px;color:#68d391;display:flex;gap:12px;align-items:center;flex-wrap:wrap">'+
+    '<span style="font-weight:600;color:#38a169">Env:</span>'+
+    ENV_MOLECULES.map(function(e){return'<span style="color:#9ae6b4">'+e.name+'</span>';}).join("")+
+    '<span style="color:#4a5568;margin-left:auto;font-size:9px">Resonance + phase coupling \u00B7 FIMD harmonic phase advance</span>'+
+  '</div>';
+  buildTopBar();buildTabs();
+}
+
+function buildTopBar(){
+  var tb=document.getElementById("topBar");tb.innerHTML="";
+  var btnRun=document.createElement("button");btnRun.id="btnRun";btnRun.style.background="#38a169";btnRun.textContent="\u25B6 Run";
+  btnRun.onclick=function(){running=!running;btnRun.textContent=running?"\u23F8 Pause":"\u25B6 Run";btnRun.style.background=running?"#e53e3e":"#38a169";};
+  tb.appendChild(btnRun);
+  var btnReset=document.createElement("button");btnReset.style.background="#4a5568";btnReset.textContent="\u21BA Reset";
+  btnReset.onclick=function(){running=false;var br=document.getElementById("btnRun");br.textContent="\u25B6 Run";br.style.background="#38a169";initSim();};
+  tb.appendChild(btnReset);
+  var btnCSV=document.createElement("button");btnCSV.style.background="#2b6cb0";btnCSV.textContent="\u2B07 Export CSV";btnCSV.onclick=exportCSV;tb.appendChild(btnCSV);
+  var spLbl=document.createElement("span");spLbl.style.cssText="font-size:10px;color:#718096;margin-left:6px";spLbl.textContent="Speed:";tb.appendChild(spLbl);
+  [1,3,8,20,50].forEach(function(v){var b=document.createElement("button");b.textContent=v+"x";b.setAttribute("data-speed",v);b.style.cssText="background:"+(v===P.simSpeed?"#4299e1":"#2d3748")+";min-width:30px;padding:3px 6px;font-size:10px";b.onclick=function(){P.simSpeed=v;var all=document.querySelectorAll("[data-speed]");for(var k=0;k<all.length;k++)all[k].style.background=parseInt(all[k].getAttribute("data-speed"))===v?"#4299e1":"#2d3748";};tb.appendChild(b);});
+  var st=document.createElement("div");st.id="statsBar";st.style.cssText="margin-left:auto;font-size:10px;color:#718096;display:flex;gap:12px;flex-wrap:wrap";tb.appendChild(st);
+}
+
+var currentTab="species";
+function buildTabs(){var tabBar=document.getElementById("tabBar");tabBar.innerHTML="";["species","params","log"].forEach(function(t){var b=document.createElement("button");b.className="tab-btn"+(currentTab===t?" active":"");b.textContent=t==="species"?"Species":t==="params"?"Parameters":"Event Log";b.onclick=function(){currentTab=t;buildTabs();renderRightPanel();};tabBar.appendChild(b);});renderRightPanel();}
+function renderRightPanel(){var rc=document.getElementById("rightContent");if(currentTab==="species")renderSpeciesTab(rc);else if(currentTab==="params")renderParamsTab(rc);else renderLogTab(rc);}
+
+function renderSpeciesTab(rc){
+  var c={};for(var i=0;i<sim.mols.length;i++)c[sim.mols[i].speciesId]=(c[sim.mols[i].speciesId]||0)+1;
+  var alive=[];for(var i=0;i<sim.species.length;i++)if(c[sim.species[i].id]>0)alive.push({sp:sim.species[i],n:c[sim.species[i].id]});
+  alive.sort(function(a,b){return b.n-a.n;});
+  var html='<div class="panel" style="padding:10px;max-height:480px;overflow-y:auto;border-radius:0 6px 6px 6px">';
+  html+='<div style="font-size:10px;color:#718096;margin-bottom:6px;font-weight:600">ALIVE: '+alive.length+' species, '+sim.mols.length+' mol ('+sim.species.length+' discovered)</div>';
+  for(var i=0;i<alive.length;i++){var sp=alive[i].sp,bg=selectedSp===sp.id?"rgba(66,153,225,0.12)":"transparent";
+    var depth=sp._depth!==undefined?sp._depth:(sp.depth||0);
+    html+='<div data-sid="'+sp.id+'" style="display:flex;align-items:center;gap:5px;padding:2px 4px;border-radius:3px;cursor:pointer;font-size:10px;line-height:15px;background:'+bg+'">'+
+      '<span style="width:7px;height:7px;border-radius:50%;background:'+col(sp.id)+';flex-shrink:0"></span>'+
+      '<span style="color:#e2e8f0;font-weight:500;min-width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+sp.name+'</span>'+
+      '<span style="color:#4a5568;font-size:8px">['+sp.freqs.join(",")+']</span>'+
+      '<span style="color:#2d3748;font-size:7px;margin-left:2px">g'+depth+'</span>'+
+      '<span style="margin-left:auto;color:#a0aec0;font-weight:600;min-width:20px;text-align:right">'+alive[i].n+'</span>'+
+    '</div>';
+  }
+  html+='</div>';
+  if(selectedSp!==null){var sp=null;for(var i=0;i<sim.species.length;i++)if(sim.species[i].id===selectedSp){sp=sim.species[i];break;}
+    if(sp){var pn="Primordial";if(sp.parent){var parts=[];for(var i=0;i<sp.parent.length;i++){if(sp.parent[i]===-1){parts.push("Environment");continue;}var found=null;for(var j=0;j<sim.species.length;j++)if(sim.species[j].id===sp.parent[i]){found=sim.species[j];break;}parts.push(found?found.name:"Sp-"+sp.parent[i]);}pn=parts.join(" + ");}
+      var depth=sp._depth!==undefined?sp._depth:(sp.depth||0);
+      html+='<div class="panel" style="padding:8px;margin-top:6px;font-size:10px">'+
+        '<div style="display:flex;align-items:center;gap:5px;margin-bottom:3px"><span style="width:9px;height:9px;border-radius:50%;background:'+col(sp.id)+'"></span><span style="font-weight:600;color:#e2e8f0">'+sp.name+'</span></div>'+
+        '<div style="color:#718096">Modes: <span style="color:#a0aec0">'+sp.freqs.join(", ")+' cm\u207B\u00B9</span></div>'+
+        '<div style="color:#718096">Origin: <span style="color:#a0aec0">'+pn+'</span></div>'+
+        '<div style="color:#718096">Generation: <span style="color:#a0aec0">'+depth+'</span></div>'+
+        (sp.birthStep?'<div style="color:#718096">Born at step: <span style="color:#a0aec0">'+sp.birthStep+'</span></div>':'')+
+      '</div>';
+    }
+  }
+  rc.innerHTML=html;
+  var els=rc.querySelectorAll("[data-sid]");for(var i=0;i<els.length;i++){els[i].onclick=(function(el){return function(){var id=parseInt(el.getAttribute("data-sid"));selectedSp=selectedSp===id?null:id;renderRightPanel();};})(els[i]);}
+}
+
+function renderParamsTab(rc){
+  var defs=[
+    {key:"initialSpecies",label:"Initial species",min:2,max:100,step:1},
+    {key:"initialPopPerSpecies",label:"Pop per species",min:1,max:50,step:1},
+    {key:"maxSpecies",label:"Max species cap",min:10,max:2000,step:10},
+    {key:"maxPop",label:"Max population",min:50,max:2000,step:10},
+    {key:"minPop",label:"Min population",min:10,max:200,step:5},
+    {key:"collisionR",label:"Collision radius",min:3,max:25,step:1},
+    {key:"reactionProb",label:"Reaction prob",min:0.01,max:0.5,step:0.01},
+    {key:"decayRate",label:"Decay rate",min:0.0001,max:0.005,step:0.0001},
+    {key:"envReactRate",label:"Env. react rate",min:0.0001,max:0.01,step:0.0001},
+    {key:"speedFactor",label:"Molecule speed",min:0.2,max:4,step:0.1},
+    {key:"freqMin",label:"Freq min (cm\u207B\u00B9)",min:10,max:200,step:5},
+    {key:"freqMax",label:"Freq max (cm\u207B\u00B9)",min:200,max:2000,step:10},
+    {key:"freqTolerance",label:"Species tolerance",min:2,max:50,step:1},
+    {key:"csvInterval",label:"CSV record interval",min:5,max:500,step:5},
+  ];
+  var html='<div class="panel" style="padding:10px;max-height:480px;overflow-y:auto;border-radius:0 6px 6px 6px">';
+  html+='<div style="font-size:10px;color:#718096;margin-bottom:8px;font-weight:600">SIMULATION PARAMETERS</div>';
+  html+='<div style="font-size:9px;color:#4a5568;margin-bottom:8px">Initial species/pop apply on Reset. Other params are live.</div>';
+  for(var i=0;i<defs.length;i++){var d=defs[i],v=P[d.key];var isFloat=d.step<1;
+    html+='<div class="ctrl-row"><label>'+d.label+'</label><input type="range" data-pk="'+d.key+'" min="'+d.min+'" max="'+d.max+'" step="'+d.step+'" value="'+v+'"><span class="val" id="pv_'+d.key+'">'+(isFloat?v.toFixed(4):v)+'</span></div>';
+  }
+  html+='<div style="margin-top:10px"><button id="btnApplyReset" style="background:#38a169;font-size:10px">Apply & Reset</button></div></div>';
+  rc.innerHTML=html;
+  var sliders=rc.querySelectorAll("input[type=range]");for(var i=0;i<sliders.length;i++){sliders[i].oninput=(function(sl){return function(){var k=sl.getAttribute("data-pk");var v=parseFloat(sl.value);P[k]=v;var isFloat=parseFloat(sl.getAttribute("step"))<1;document.getElementById("pv_"+k).textContent=isFloat?v.toFixed(4):v;};})(sliders[i]);}
+  document.getElementById("btnApplyReset").onclick=function(){running=false;var br=document.getElementById("btnRun");if(br){br.textContent="\u25B6 Run";br.style.background="#38a169";}initSim();};
+}
+
+function renderLogTab(rc){
+  var html='<div class="panel" style="padding:10px;max-height:480px;overflow-y:auto;border-radius:0 6px 6px 6px">';
+  html+='<div style="font-size:10px;color:#718096;margin-bottom:6px;font-weight:600">EVENT LOG ('+events.length+')</div>';
+  if(!events.length)html+='<div style="font-size:10px;color:#4a5568">Press Run to start...</div>';
+  for(var i=0;i<events.length;i++)html+='<div style="font-size:9px;color:#a0aec0;padding:2px 0;border-bottom:1px solid rgba(255,255,255,0.03);line-height:13px;opacity:'+(1-i*0.015)+'">'+events[i]+'</div>';
+  html+='</div>';rc.innerHTML=html;
+}
+
+// ===================== RENDER =====================
+var simCvs,simCtx,chartCvs,chartCtx,treeCvs,treeCtx;
+function initCanvases(){simCvs=document.getElementById("simCanvas");simCtx=simCvs.getContext("2d");chartCvs=document.getElementById("chartCanvas");chartCtx=chartCvs.getContext("2d");treeCvs=document.getElementById("treeCanvas");treeCtx=treeCvs.getContext("2d");}
+
+function renderSim(){
+  var dpr=window.devicePixelRatio||1;simCvs.width=P.boxW*dpr;simCvs.height=P.boxH*dpr;simCtx.setTransform(dpr,0,0,dpr,0,0);
+  simCtx.fillStyle="#0a0e17";simCtx.fillRect(0,0,P.boxW,P.boxH);
+  simCtx.strokeStyle="rgba(255,255,255,0.025)";simCtx.lineWidth=.5;
+  for(var x=0;x<P.boxW;x+=40){simCtx.beginPath();simCtx.moveTo(x,0);simCtx.lineTo(x,P.boxH);simCtx.stroke();}
+  for(var y=0;y<P.boxH;y+=40){simCtx.beginPath();simCtx.moveTo(0,y);simCtx.lineTo(P.boxW,y);simCtx.stroke();}
+  for(var i=0;i<sim.mols.length;i++){var p=sim.mols[i],c2=col(p.speciesId);var amp=0;for(var k=0;k<p.modes.length;k++){var mm=p.modes[k];amp+=Math.sqrt(mm.q*mm.q+Math.pow(mm.pi/(mm.freq*.01||1),2));}amp/=p.modes.length;var r=2.2+Math.min(amp*12,2.5);
+    simCtx.beginPath();simCtx.arc(p.x,p.y,r+1.2,0,Math.PI*2);simCtx.fillStyle=c2+"20";simCtx.fill();
+    simCtx.beginPath();simCtx.arc(p.x,p.y,r,0,Math.PI*2);simCtx.fillStyle=c2;simCtx.fill();}
+  simCtx.strokeStyle="rgba(100,180,255,0.12)";simCtx.lineWidth=1;simCtx.strokeRect(.5,.5,P.boxW-1,P.boxH-1);
+}
+
+function getTopIds(){var c={};for(var i=0;i<sim.mols.length;i++)c[sim.mols[i].speciesId]=(c[sim.mols[i].speciesId]||0)+1;var arr=[];for(var k in c)arr.push({id:parseInt(k),n:c[k]});arr.sort(function(a,b){return b.n-a.n;});var out=[];for(var i=0;i<Math.min(15,arr.length);i++)out.push(arr[i].id);return out;}
+
+function renderChart(){
+  var dpr=window.devicePixelRatio||1;var cw=chartCvs.clientWidth||P.boxW;chartCvs.width=cw*dpr;chartCvs.height=CHART_H*dpr;chartCtx.setTransform(dpr,0,0,dpr,0,0);
+  chartCtx.fillStyle="#0c1019";chartCtx.fillRect(0,0,cw,CHART_H);
+  if(popHistory.length<2){chartCtx.fillStyle="#4a5568";chartCtx.font="11px monospace";chartCtx.textAlign="center";chartCtx.fillText("Population chart...",cw/2-60,CHART_H/2);return;}
+  var topIds=getTopIds();var ml=36,mr=10,mt=10,mb=22,w=cw-ml-mr,h=CHART_H-mt-mb;var maxC=1;
+  for(var i=0;i<popHistory.length;i++)for(var j=0;j<topIds.length;j++)maxC=Math.max(maxC,popHistory[i].counts[topIds[j]]||0);
+  chartCtx.strokeStyle="#2d3748";chartCtx.lineWidth=1;chartCtx.beginPath();chartCtx.moveTo(ml,mt);chartCtx.lineTo(ml,mt+h);chartCtx.lineTo(ml+w,mt+h);chartCtx.stroke();
+  chartCtx.fillStyle="#4a5568";chartCtx.font="9px monospace";chartCtx.textAlign="right";
+  for(var i=0;i<=4;i++){var v=Math.round(maxC*i/4),y=mt+h-h*i/4;chartCtx.fillText(v,ml-4,y+3);if(i>0){chartCtx.strokeStyle="#1a202c";chartCtx.lineWidth=.5;chartCtx.beginPath();chartCtx.moveTo(ml,y);chartCtx.lineTo(ml+w,y);chartCtx.stroke();}}
+  chartCtx.textAlign="center";var first=popHistory[0].step,last=popHistory[popHistory.length-1].step;chartCtx.fillText(first,ml,mt+h+14);chartCtx.fillText(last,ml+w,mt+h+14);
+  for(var si=0;si<topIds.length;si++){var sid=topIds[si];chartCtx.strokeStyle=col(sid);chartCtx.lineWidth=1.3;chartCtx.beginPath();var started=false;
+    for(var k=0;k<popHistory.length;k++){var x=ml+(popHistory[k].step-first)/(last-first||1)*w;var y=mt+h-(popHistory[k].counts[sid]||0)/maxC*h;if(!started){chartCtx.moveTo(x,y);started=true;}else chartCtx.lineTo(x,y);}chartCtx.stroke();}
+}
+
+function renderStats(){var st=document.getElementById("statsBar");if(!st)return;var c={};for(var i=0;i<sim.mols.length;i++)c[sim.mols[i].speciesId]=true;var nAlive=Object.keys(c).length;
+  // Find max depth alive
+  var maxD=0;for(var i=0;i<sim.species.length;i++)if(c[sim.species[i].id]){var d=sim.species[i]._depth||sim.species[i].depth||0;maxD=Math.max(maxD,d);}
+  st.innerHTML='<span>Step: <b style="color:#a0aec0">'+sim.step+'</b></span><span>Mol: <b style="color:#a0aec0">'+sim.mols.length+'</b></span><span>Alive: <b style="color:#a0aec0">'+nAlive+'</b></span><span>Disc: <b style="color:#a0aec0">'+sim.species.length+'</b></span><span>Rxns: <b style="color:#a0aec0">'+sim.reactions+'</b></span><span>MaxGen: <b style="color:#68d391">'+maxD+'</b></span>';
+}
+
+// ===================== MAIN LOOP =====================
+initSim();buildUI();initCanvases();
+var lastUi=0,lastTree=0;
+
+function loop(){
+  if(running)stepSim();
+  renderSim();
+  var now=performance.now();
+  if(now-lastUi>120){lastUi=now;renderChart();
+    if(currentTab==="species")renderSpeciesTab(document.getElementById("rightContent"));
+    else if(currentTab==="log")renderLogTab(document.getElementById("rightContent"));
+    renderStats();
+  }
+  // Tree updates less frequently (expensive)
+  if(now-lastTree>500){lastTree=now;renderTree();}
+  requestAnimationFrame(loop);
+}
+renderChart();renderStats();renderTree();
+requestAnimationFrame(loop);
+</script>
+</body>
+</html>

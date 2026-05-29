@@ -1,0 +1,497 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FIMD Band-Limited Sonification</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            line-height: 1.6;
+            color: #333;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 40px rgba(0,0,0,0.1);
+            overflow: hidden;
+        }
+
+        header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 40px;
+            text-align: center;
+        }
+
+        header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        header p {
+            font-size: 1.2em;
+            opacity: 0.95;
+        }
+
+        .molecule-section {
+            padding: 40px;
+            text-align: center;
+            background: #f8f9fa;
+        }
+
+        .molecule-section h2 {
+            color: #667eea;
+            margin-bottom: 20px;
+            font-size: 2em;
+        }
+
+        .molecule-image {
+            max-width: 500px;
+            width: 100%;
+            height: 400px;
+            margin: 0 auto;
+            background: white;
+            border: 3px solid #667eea;
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.2em;
+            color: #999;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        .content {
+            padding: 40px;
+        }
+
+        .summary {
+            background: #e3f2fd;
+            padding: 30px;
+            border-radius: 10px;
+            border-left: 5px solid #2196f3;
+            margin-bottom: 40px;
+        }
+
+        .summary h2 {
+            color: #1976d2;
+            margin-bottom: 15px;
+            font-size: 1.8em;
+        }
+
+        .summary p {
+            margin-bottom: 15px;
+            font-size: 1.05em;
+            text-align: justify;
+        }
+
+        .summary strong {
+            color: #1565c0;
+        }
+
+        .audio-section {
+            margin-top: 40px;
+        }
+
+        .audio-section h2 {
+            color: #667eea;
+            margin-bottom: 30px;
+            font-size: 2em;
+            text-align: center;
+        }
+
+        .audio-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 40px;
+        }
+
+        .audio-table th {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 15px;
+            text-align: left;
+            font-size: 1.1em;
+        }
+
+        .audio-table td {
+            padding: 20px 15px;
+            border-bottom: 1px solid #e0e0e0;
+            vertical-align: middle;
+        }
+
+        .audio-table tr:hover {
+            background: #f5f5f5;
+        }
+
+        .band-label {
+            font-weight: bold;
+            color: #667eea;
+            font-size: 1.1em;
+            min-width: 150px;
+        }
+
+        .waveform-cell {
+            text-align: center;
+        }
+
+        .waveform-img {
+            max-width: 300px;
+            height: 80px;
+            background: linear-gradient(90deg, #667eea 0%, #764ba2 50%, #667eea 100%);
+            border-radius: 5px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 0.9em;
+            opacity: 0.7;
+            margin: 0 auto;
+        }
+
+        .audio-player {
+            width: 100%;
+            max-width: 400px;
+        }
+
+        audio {
+            width: 100%;
+            height: 40px;
+            border-radius: 5px;
+        }
+
+        audio::-webkit-media-controls-panel {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+
+        .methodology {
+            background: #fff3e0;
+            padding: 30px;
+            border-radius: 10px;
+            border-left: 5px solid #ff9800;
+            margin-top: 40px;
+        }
+
+        .methodology h2 {
+            color: #f57c00;
+            margin-bottom: 15px;
+            font-size: 1.8em;
+        }
+
+        .methodology h3 {
+            color: #e65100;
+            margin-top: 20px;
+            margin-bottom: 10px;
+            font-size: 1.3em;
+        }
+
+        .methodology p {
+            margin-bottom: 15px;
+            font-size: 1.05em;
+            text-align: justify;
+        }
+
+        .methodology ol {
+            margin-left: 30px;
+            margin-bottom: 15px;
+        }
+
+        .methodology li {
+            margin-bottom: 10px;
+            font-size: 1.05em;
+        }
+
+        .methodology code {
+            background: #ffe0b2;
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', monospace;
+        }
+
+        footer {
+            background: #333;
+            color: white;
+            text-align: center;
+            padding: 20px;
+            font-size: 0.9em;
+        }
+
+        footer a {
+            color: #667eea;
+            text-decoration: none;
+        }
+
+        footer a:hover {
+            text-decoration: underline;
+        }
+
+        .frequency-info {
+            font-size: 0.9em;
+            color: #666;
+            font-style: italic;
+            margin-top: 5px;
+        }
+
+        @media (max-width: 768px) {
+            header h1 {
+                font-size: 1.8em;
+            }
+
+            .audio-table {
+                font-size: 0.9em;
+            }
+
+            .waveform-img {
+                max-width: 200px;
+                height: 60px;
+            }
+
+            .audio-player {
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <!-- Header -->
+        <header>
+            <h1>🎵 Sonification of Band-Limited Molecular Dynamics</h1>
+            <p>Hearing the Vibrational Modes of a Dipeptide Through Sound</p>
+        </header>
+
+        <!-- Molecule Section -->
+        <div class="molecule-section">
+            <h2>Ace-Phe-Tyr-NMe Dipeptide</h2>
+            <div class="molecule-image">
+                <img src="FIMDSONO/dipeptide.png" alt="Ace-Phe-Tyr-NMe Dipeptide" 
+         style="max-width: 65%; height: auto;">
+            </div>
+        </div>
+
+        <!-- Content -->
+        <div class="content">
+            <!-- Summary -->
+            <div class="summary">
+                <h2>What Are These Sounds?</h2>
+                <p>
+                    These audio files represent the <strong>vibrational dynamics</strong> of a dipeptide molecule 
+                    simulated using <strong>Frequency-domain Integrator Molecular Dynamics (FIMD)</strong>. Each sound 
+                    corresponds to a specific frequency band of molecular vibrations, allowing you to literally 
+                    <em>hear</em> how different parts of the molecule move at different speeds.
+                </p>
+                <p>
+                    The waveforms you hear are derived from the <strong>potential energy (PE) fluctuations</strong> 
+                    of the molecule over time. As atoms vibrate—bonds stretching, angles bending, and molecular 
+                    backbones twisting—the potential energy oscillates. These oscillations, when converted to sound, 
+                    reveal the characteristic "voice" of each vibrational mode.
+                </p>
+                <p>
+                    <strong>Low frequencies (300-600 cm⁻¹)</strong> produce deep rumbles representing slow backbone 
+                    bending motions. <strong>Mid frequencies (600-1500 cm⁻¹)</strong> create tones from angle bending 
+                    and torsions. <strong>High frequencies (2000-4000 cm⁻¹)</strong> generate rapid buzzing sounds 
+                    from fast C-H and N-H bond stretches.
+                </p>
+            </div>
+
+            <!-- Audio Table -->
+            <div class="audio-section">
+                <h2>Listen to Each Frequency Band</h2>
+                <table class="audio-table">
+                    <thead>
+                        <tr>
+                            <th>Frequency Band</th>
+                            <th>Waveform</th>
+                            <th>Audio Player</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr>
+                            <td>
+                                <div class="band-label">300-600 cm⁻¹</div>
+                                <div class="frequency-info">Backbone bending, twisting</div>
+                            </td>
+                            <td class="waveform-cell">
+                                 <img src="FIMDSONO/300600.png" 
+                                alt="Waveform for 300-600 cm⁻¹" 
+                                style="max-width: 100%; height: 80px; border-radius: 5px;">
+                            </td>
+                            <td>
+                                <audio class="audio-player" controls>
+                                    <source src="FIMDSONO/audio_pe_300_600.wav" type="audio/wav">
+                                    Your browser does not support the audio element.
+                                </audio>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="band-label">600-900 cm⁻¹</div>
+                                <div class="frequency-info">Out-of-plane bending</div>
+                            </td>
+                            <td class="waveform-cell">
+                                <img src="FIMDSONO/600900.png" 
+                                alt="Waveform for 600-900 cm⁻¹" 
+                                style="max-width: 100%; height: 80px; border-radius: 5px;">
+                            </td>
+                            <td>
+                                <audio class="audio-player" controls>
+                                    <source src="FIMDSONO/audio_pe_600_900.wav" type="audio/wav">
+                                    Your browser does not support the audio element.
+                                </audio>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="band-label">900-1200 cm⁻¹</div>
+                                <div class="frequency-info">C-C stretches, rocking</div>
+                            </td>
+                            <td class="waveform-cell">
+                                <img src="FIMDSONO/9001200.png" 
+                                alt="Waveform for 900-1200 cm⁻¹" 
+                                style="max-width: 100%; height: 80px; border-radius: 5px;">
+                            </td>
+                            <td>
+                                <audio class="audio-player" controls>
+                                    <source src="FIMDSONO/audio_pe_900_1200.wav" type="audio/wav">
+                                    Your browser does not support the audio element.
+                                </audio>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="band-label">1200-1500 cm⁻¹</div>
+                                <div class="frequency-info">C-N stretches, bending</div>
+                            </td>
+                            <td class="waveform-cell">
+                                <img src="FIMDSONO/12001500.png" 
+                                alt="Waveform for 1200-1500 cm⁻¹" 
+                                style="max-width: 100%; height: 80px; border-radius: 5px;">
+                            </td>
+                            <td>
+                                <audio class="audio-player" controls>
+                                    <source src="FIMDSONO/audio_pe_1200_1500.wav" type="audio/wav">
+                                    Your browser does not support the audio element.
+                                </audio>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="band-label">1500-2000 cm⁻¹</div>
+                                <div class="frequency-info">C=O stretches (amide I)</div>
+                            </td>
+                            <td class="waveform-cell">
+                                <img src="FIMDSONO/15002000.png" 
+                                alt="Waveform for 1500-2000 cm⁻¹" 
+                                style="max-width: 100%; height: 80px; border-radius: 5px;">
+                            </td>
+                            <td>
+                                <audio class="audio-player" controls>
+                                    <source src="FIMDSONO/audio_pe_1500_2000.wav" type="audio/wav">
+                                    Your browser does not support the audio element.
+                                </audio>
+                            </td>
+                        </tr>
+                        <tr>
+                            <td>
+                                <div class="band-label">2000-4000 cm⁻¹</div>
+                                <div class="frequency-info">C-H, N-H stretches</div>
+                            </td>
+                            <td class="waveform-cell">
+                                <img src="FIMDSONO/20004000.png" 
+                                alt="Waveform for 2000-4000 cm⁻¹" 
+                                style="max-width: 100%; height: 80px; border-radius: 5px;">
+                            </td>
+                            <td>
+                                <audio class="audio-player" controls>
+                                    <source src="FIMDSONO/audio_pe_2000_4000.wav" type="audio/wav">
+                                    Your browser does not support the audio element.
+                                </audio>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <!-- Methodology -->
+            <div class="methodology">
+                <h2>How Are These Waveforms Generated?</h2>
+                
+                <h3>The FIMD Simulation Process</h3>
+                <p>
+                    The simulation uses <strong>Band-Limited Frequency-domain Integrator Molecular Dynamics (FIMD)</strong>, 
+                    which restricts molecular motion to specific frequency windows. This allows us to isolate and study 
+                    different types of vibrational modes independently.
+                </p>
+
+                <h3>From Molecular Vibrations to Sound</h3>
+                <ol>
+                    <li>
+                        <strong>Molecular Dynamics Simulation:</strong> The dipeptide is simulated in the NVE ensemble 
+                        (constant number of particles, volume, and energy) with dynamics restricted to a specific 
+                        frequency band (e.g., 300-600 cm⁻¹).
+                    </li>
+                    <li>
+                        <strong>Energy Tracking:</strong> At each timestep (0.1 fs), we compute the potential energy 
+                        <code>V(x)</code> from the full molecular force field and kinetic energy <code>K = ½mv²</code> 
+                        from atomic velocities.
+                    </li>
+                    <li>
+                        <strong>PE Fluctuation Extraction:</strong> The mean potential energy is subtracted to isolate 
+                        oscillations: <code>ΔPE(t) = PE(t) - ⟨PE⟩</code>. These fluctuations directly reflect how the 
+                        molecular geometry deforms as modes vibrate.
+                    </li>
+                    <li>
+                        <strong>Timescale Mapping:</strong> The simulation runs at picosecond timescales (1 ps = 10⁻¹² s), 
+                        but human hearing operates at millisecond-to-second scales. We map 1 picosecond of simulation 
+                        to 1 second of audio (adjustable with speed factor).
+                    </li>
+                    <li>
+                        <strong>Audio Resampling:</strong> The PE fluctuation time series is resampled to a standard 
+                        audio sample rate (44.1 kHz) and repeated multiple times to create listenable-length audio files.
+                    </li>
+                    <li>
+                        <strong>WAV File Generation:</strong> The processed signal is normalized and saved as a 16-bit 
+                        PCM WAV file, ready for playback.
+                    </li>
+                </ol>
+
+                <h3>Physical Interpretation</h3>
+                <p>
+                    The audio waveforms directly represent <strong>energy flow</strong> within the molecular system. 
+                    When you hear oscillations, you're hearing the molecule's potential energy rising and falling as 
+                    bonds compress and extend, angles open and close, and torsions rotate back and forth.
+                </p>
+                <p>
+                    <strong>Why PE fluctuations?</strong> Potential energy captures the "restoring forces" that drive 
+                    vibrations. When a bond stretches beyond equilibrium, PE increases; when kinetic energy converts 
+                    back to potential energy, you hear the characteristic frequency of that vibrational mode.
+                </p>
+                <p>
+                    Each frequency band isolates different types of motion: slow collective motions (low frequency) 
+                    versus fast local bond vibrations (high frequency). By sonifying each band separately, we can 
+                    aurally distinguish these different dynamical timescales.
+                </p>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <footer>
+            <p>Generated using FIMD Band-Limited Molecular Dynamics Sonification Pipeline</p>
+            <p>Force Field: AMBER ff14SB Force Field | Analysis: Python/NumPy/SciPy | Visualization: Custom HTML/CSS</p>
+        </footer>
+    </div>
+</body>
+</html>

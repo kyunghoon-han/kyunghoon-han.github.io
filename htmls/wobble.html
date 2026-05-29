@@ -1,0 +1,557 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fat Trajectory Visualization</title>
+    <style>
+        * { box-sizing: border-box; }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            margin: 0;
+            padding: 16px;
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 20px;
+        }
+
+        .header h1 {
+            font-size: clamp(1.5em, 5vw, 2.5em);
+            margin: 0 0 8px;
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .header .subtitle {
+            font-size: 0.95em;
+            opacity: 0.85;
+            margin: 0 0 6px;
+        }
+
+        .header .citation {
+            font-size: 0.85em;
+            opacity: 0.75;
+        }
+
+        .header .citation a {
+            color: #4ecdc4;
+            text-decoration: none;
+            border-bottom: 1px dotted #4ecdc4;
+        }
+
+        .header .citation a:hover {
+            color: #ff6b6b;
+            border-bottom-color: #ff6b6b;
+        }
+
+        .panel {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 16px;
+            backdrop-filter: blur(10px);
+            margin-bottom: 16px;
+        }
+
+        .equation {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 12px;
+            border-radius: 8px;
+            font-family: 'Courier New', monospace;
+            text-align: center;
+            font-size: clamp(0.85em, 3vw, 1em);
+            overflow-x: auto;
+            white-space: nowrap;
+        }
+
+        .equation-caption {
+            font-size: 0.85em;
+            opacity: 0.85;
+            text-align: center;
+            margin-top: 6px;
+        }
+
+        .equation-caption .highlight {
+            color: #4ecdc4;
+            font-weight: bold;
+        }
+
+        /* Native collapsible — works on mobile, no JS needed */
+        details {
+            margin-top: 10px;
+        }
+
+        details summary {
+            cursor: pointer;
+            padding: 8px 12px;
+            background: rgba(255, 255, 255, 0.08);
+            border-radius: 8px;
+            font-size: 0.9em;
+            font-weight: 600;
+            list-style: none;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            user-select: none;
+        }
+
+        details summary::-webkit-details-marker { display: none; }
+
+        details summary::before {
+            content: '▶';
+            font-size: 0.7em;
+            transition: transform 0.2s ease;
+            color: #4ecdc4;
+        }
+
+        details[open] summary::before {
+            transform: rotate(90deg);
+        }
+
+        details summary:hover {
+            background: rgba(255, 255, 255, 0.15);
+        }
+
+        details .details-body {
+            padding: 12px 4px 4px;
+            font-size: 0.92em;
+            line-height: 1.5;
+        }
+
+        details .details-body p { margin: 0 0 8px; }
+        details .details-body p:last-child { margin-bottom: 0; }
+
+        .visualization-container {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 16px;
+            margin-bottom: 16px;
+        }
+
+        @media (min-width: 768px) {
+            .visualization-container {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .viz-panel h3 {
+            margin: 0 0 10px;
+            font-size: 1.05em;
+        }
+
+        canvas {
+            border-radius: 8px;
+            width: 100%;
+            height: auto;
+            display: block;
+            background: rgba(0, 0, 0, 0.3);
+        }
+
+        .viz-caption {
+            font-size: 0.82em;
+            opacity: 0.8;
+            margin-top: 8px;
+            text-align: center;
+        }
+
+        .controls {
+            text-align: center;
+        }
+
+        .control-group {
+            margin: 10px 0;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .control-group label {
+            font-weight: bold;
+            font-size: 0.9em;
+        }
+
+        input[type="range"] {
+            width: 100%;
+            max-width: 280px;
+            accent-color: #4ecdc4;
+        }
+
+        button {
+            background: linear-gradient(45deg, #ff6b6b, #4ecdc4);
+            border: none;
+            padding: 10px 20px;
+            border-radius: 25px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            margin: 4px;
+            transition: transform 0.2s ease;
+            font-size: 0.9em;
+        }
+
+        button:hover, button:focus {
+            transform: scale(1.05);
+        }
+
+        .button-row {
+            margin-top: 8px;
+        }
+
+        /* Concept cards — equation prominent, prose collapsed */
+        .key-concepts {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 12px;
+        }
+
+        @media (min-width: 600px) {
+            .key-concepts {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+        .concept-card {
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 12px;
+            padding: 14px;
+            backdrop-filter: blur(10px);
+        }
+
+        .concept-card h3 {
+            margin: 0 0 10px;
+            font-size: 1em;
+        }
+
+        .concept-card .equation {
+            margin: 0;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Fat Trajectory Visualization</h1>
+            <p class="subtitle">Vibrational mode coupling through geometric manifolds</p>
+            <p class="citation">
+                Companion visual for Chapter&nbsp;5 of
+                <a href="https://hdl.handle.net/10993/66341" target="_blank" rel="noopener">
+                    Han (2025), <em>Analysis, Calculation and Understanding of Molecular Vibrations</em>
+                </a>
+            </p>
+        </div>
+
+        <!-- HAMILTONIAN: equation first, prose hidden -->
+        <div class="panel">
+            <div class="equation">
+                H = ½(p<sub>x</sub>² + p<sub>y</sub>²) + ½(ω₁²x² + ω₂²y²) + λxy
+            </div>
+            <p class="equation-caption">
+                2D coupled harmonic oscillator — the <span class="highlight">λxy</span> term couples the two modes.
+            </p>
+            <details>
+                <summary>What am I looking at?</summary>
+                <div class="details-body">
+                    <p>A simple example: two vibrational modes in the <em>x</em> and <em>y</em> directions, coupled by the term <strong>λxy</strong>. When one mode oscillates, it influences the other.</p>
+                    <p>The "fat manifold" framework introduced in Chapter&nbsp;5 of the thesis shows how this coupling manifests <em>geometrically</em>: instead of tracking the trajectory alone, we attach a perpendicular space at every point and study how that space twists and deforms along the path.</p>
+                </div>
+            </details>
+        </div>
+
+        <!-- TWO CANVASES — captions trimmed, prose hidden -->
+        <div class="visualization-container">
+            <div class="panel viz-panel">
+                <h3>Configuration space trajectory γ(s)</h3>
+                <canvas id="trajectory-canvas" width="400" height="400"></canvas>
+                <p class="viz-caption">Molecular motion path • current position in red • mode vectors in yellow/pink</p>
+                <details>
+                    <summary>Explanation</summary>
+                    <div class="details-body">
+                        <p>Each point along γ(s) represents a molecular configuration. The tangent vector (direction of motion) and the two perpendicular vectors at the current point form a local frame — these perpendicular directions are where the "fat" of the manifold lives.</p>
+                    </div>
+                </details>
+            </div>
+
+            <div class="panel viz-panel">
+                <h3>Fat manifold cross-sections</h3>
+                <canvas id="fat-canvas" width="400" height="400"></canvas>
+                <p class="viz-caption">Tubular neighbourhood around γ(s) — ellipses are perpendicular fibres</p>
+                <details>
+                    <summary>Explanation</summary>
+                    <div class="details-body">
+                        <p>At each point along γ(s) we attach a perpendicular space showing possible vibrational displacements. Stacking these gives the tubular neighbourhood — the "fat" version of the curve. Watch the ellipses rotate and rescale as coupling acts.</p>
+                    </div>
+                </details>
+            </div>
+        </div>
+
+        <!-- CONTROLS -->
+        <div class="panel controls">
+            <div class="control-group">
+                <label>Coupling strength λ: <span id="coupling-value">0.3</span></label>
+                <input type="range" id="coupling-slider" min="0" max="1" step="0.1" value="0.3">
+            </div>
+
+            <div class="control-group">
+                <label>Animation speed</label>
+                <input type="range" id="speed-slider" min="1" max="10" step="1" value="5">
+            </div>
+
+            <div class="button-row">
+                <button onclick="toggleAnimation()">Play / Pause</button>
+                <button onclick="resetAnimation()">Reset</button>
+            </div>
+        </div>
+
+        <!-- KEY CONCEPTS: equation prominent, prose collapsed -->
+        <div class="key-concepts">
+            <div class="concept-card">
+                <h3>🌀 Fat manifold structure</h3>
+                <div class="equation">F(s,v) = exp<sub>γ(s)</sub>(v)</div>
+                <details>
+                    <summary>Read more</summary>
+                    <div class="details-body">
+                        <p>Not just a 1D curve, but a whole tubular neighbourhood around it. Each point on the trajectory has a perpendicular space attached — like growing a fibre bundle.</p>
+                    </div>
+                </details>
+            </div>
+
+            <div class="concept-card">
+                <h3>🔄 O'Neill tensors</h3>
+                <div class="equation">𝒜<sub>X</sub> Y = (∇<sub>X<sup>H</sup></sub> Y<sup>V</sup>)<sup>H</sup></div>
+                <details>
+                    <summary>Read more</summary>
+                    <div class="details-body">
+                        <p>These measure how horizontal motion (along the trajectory) couples to vertical motion (vibrational modes). When modes couple strongly, the tube twists and deforms.</p>
+                    </div>
+                </details>
+            </div>
+
+            <div class="concept-card">
+                <h3>📐 Volume evolution</h3>
+                <div class="equation">dV/ds = −tr(𝒜<sub>∂/∂s</sub>)</div>
+                <details>
+                    <summary>Read more</summary>
+                    <div class="details-body">
+                        <p>Watch the cross-sectional area change. When modes are coupled, the tube expands and contracts. When decoupled, the volume stays constant.</p>
+                    </div>
+                </details>
+            </div>
+
+            <div class="concept-card">
+                <h3>🎭 Mode-coupling detection</h3>
+                <div class="equation">κ = ‖𝒜<sub>e₁</sub> e₂‖² + ‖𝒜<sub>e₂</sub> e₁‖²</div>
+                <details>
+                    <summary>Read more</summary>
+                    <div class="details-body">
+                        <p>Strong coupling shows as tube twisting and rotation, volume oscillations, non-zero O'Neill tensors, and ellipse-shape changes.</p>
+                    </div>
+                </details>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Canvas setup
+        const trajCanvas = document.getElementById('trajectory-canvas');
+        const fatCanvas = document.getElementById('fat-canvas');
+        const trajCtx = trajCanvas.getContext('2d');
+        const fatCtx = fatCanvas.getContext('2d');
+
+        // Animation state
+        let animating = true;
+        let time = 0;
+        let coupling = 0.3;
+        let speed = 5;
+
+        // Physical parameters
+        const omega1 = 1.0;
+        const omega2 = 1.2;
+        const amplitude = 80;
+
+        // Trajectory function — coupled harmonic oscillator
+        function trajectory(t) {
+            const x = amplitude * Math.cos(omega1 * t + coupling * Math.sin(omega2 * t));
+            const y = amplitude * Math.cos(omega2 * t + coupling * Math.sin(omega1 * t));
+            return { x: x + 200, y: y + 200 };
+        }
+
+        function getNormalModes(t) {
+            const dt = 0.01;
+            const p1 = trajectory(t);
+            const p2 = trajectory(t + dt);
+            const tangent = { x: p2.x - p1.x, y: p2.y - p1.y };
+            const tLen = Math.sqrt(tangent.x * tangent.x + tangent.y * tangent.y);
+            if (tLen > 0) {
+                tangent.x /= tLen;
+                tangent.y /= tLen;
+            }
+            const normal1 = { x: -tangent.y, y: tangent.x };
+            const normal2 = { x: tangent.y, y: -tangent.x };
+            return { normal1, normal2, tangent };
+        }
+
+        function getONeillDeformation(t) {
+            const rotation = coupling * Math.sin(2 * omega1 * t) * 0.5;
+            const scaling1 = 1 + coupling * Math.cos(omega1 * t) * 0.3;
+            const scaling2 = 1 + coupling * Math.sin(omega2 * t) * 0.3;
+            return { rotation, scaling1, scaling2 };
+        }
+
+        function drawTrajectory() {
+            trajCtx.fillStyle = 'rgba(0, 0, 0, 0.05)';
+            trajCtx.fillRect(0, 0, 400, 400);
+
+            trajCtx.strokeStyle = '#4ecdc4';
+            trajCtx.lineWidth = 2;
+            trajCtx.beginPath();
+            for (let t = 0; t < time; t += 0.1) {
+                const pos = trajectory(t);
+                if (t === 0) {
+                    trajCtx.moveTo(pos.x, pos.y);
+                } else {
+                    trajCtx.lineTo(pos.x, pos.y);
+                }
+            }
+            trajCtx.stroke();
+
+            const currentPos = trajectory(time);
+            trajCtx.fillStyle = '#ff6b6b';
+            trajCtx.beginPath();
+            trajCtx.arc(currentPos.x, currentPos.y, 8, 0, 2 * Math.PI);
+            trajCtx.fill();
+
+            const modes = getNormalModes(time);
+            const deform = getONeillDeformation(time);
+
+            trajCtx.strokeStyle = '#ffeb3b';
+            trajCtx.lineWidth = 3;
+            trajCtx.beginPath();
+            trajCtx.moveTo(currentPos.x, currentPos.y);
+            trajCtx.lineTo(
+                currentPos.x + modes.normal1.x * 40 * deform.scaling1,
+                currentPos.y + modes.normal1.y * 40 * deform.scaling1
+            );
+            trajCtx.stroke();
+
+            trajCtx.strokeStyle = '#e91e63';
+            trajCtx.beginPath();
+            trajCtx.moveTo(currentPos.x, currentPos.y);
+            trajCtx.lineTo(
+                currentPos.x + modes.normal2.x * 40 * deform.scaling2,
+                currentPos.y + modes.normal2.y * 40 * deform.scaling2
+            );
+            trajCtx.stroke();
+        }
+
+        function drawFatManifold() {
+            fatCtx.fillStyle = 'rgba(0, 0, 0, 0.1)';
+            fatCtx.fillRect(0, 0, 400, 400);
+
+            const currentPos = { x: 200, y: 200 };
+            const modes = getNormalModes(time);
+            const deform = getONeillDeformation(time);
+
+            for (let i = 0; i < 20; i++) {
+                const t = time - i * 0.5;
+                if (t < 0) continue;
+
+                const alpha = Math.max(0, 1 - i * 0.05);
+                const pos = { x: 200 + i * 8, y: 200 };
+                const localDeform = getONeillDeformation(t);
+
+                fatCtx.save();
+                fatCtx.translate(pos.x, pos.y);
+                fatCtx.rotate(localDeform.rotation);
+
+                fatCtx.strokeStyle = `rgba(76, 205, 196, ${alpha})`;
+                fatCtx.lineWidth = 2;
+                fatCtx.beginPath();
+                fatCtx.ellipse(0, 0,
+                    30 * localDeform.scaling1,
+                    20 * localDeform.scaling2,
+                    0, 0, 2 * Math.PI);
+                fatCtx.stroke();
+
+                fatCtx.restore();
+            }
+
+            fatCtx.save();
+            fatCtx.translate(currentPos.x, currentPos.y);
+            fatCtx.rotate(deform.rotation);
+
+            fatCtx.strokeStyle = '#ff6b6b';
+            fatCtx.lineWidth = 3;
+            fatCtx.beginPath();
+            fatCtx.ellipse(0, 0,
+                40 * deform.scaling1,
+                30 * deform.scaling2,
+                0, 0, 2 * Math.PI);
+            fatCtx.stroke();
+
+            fatCtx.strokeStyle = '#ffeb3b';
+            fatCtx.lineWidth = 2;
+            fatCtx.beginPath();
+            fatCtx.moveTo(-50 * deform.scaling1, 0);
+            fatCtx.lineTo(50 * deform.scaling1, 0);
+            fatCtx.stroke();
+
+            fatCtx.strokeStyle = '#e91e63';
+            fatCtx.beginPath();
+            fatCtx.moveTo(0, -40 * deform.scaling2);
+            fatCtx.lineTo(0, 40 * deform.scaling2);
+            fatCtx.stroke();
+
+            fatCtx.restore();
+
+            const volume = Math.PI * 40 * 30 * deform.scaling1 * deform.scaling2;
+            fatCtx.fillStyle = 'white';
+            fatCtx.font = '14px Arial';
+            fatCtx.fillText(`Volume: ${volume.toFixed(1)}`, 10, 30);
+            fatCtx.fillText(`Coupling: ${coupling.toFixed(2)}`, 10, 50);
+            fatCtx.fillText(`Rotation: ${(deform.rotation * 180 / Math.PI).toFixed(1)}°`, 10, 70);
+        }
+
+        function animate() {
+            if (animating) {
+                time += speed * 0.01;
+                drawTrajectory();
+                drawFatManifold();
+            }
+            requestAnimationFrame(animate);
+        }
+
+        function toggleAnimation() {
+            animating = !animating;
+        }
+
+        function resetAnimation() {
+            time = 0;
+        }
+
+        document.getElementById('coupling-slider').addEventListener('input', (e) => {
+            coupling = parseFloat(e.target.value);
+            document.getElementById('coupling-value').textContent = coupling.toFixed(1);
+        });
+
+        document.getElementById('speed-slider').addEventListener('input', (e) => {
+            speed = parseInt(e.target.value);
+        });
+
+        animate();
+    </script>
+</body>
+</html>

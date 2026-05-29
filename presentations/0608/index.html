@@ -1,0 +1,342 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>Brownian bridges for stochastic chemical processes</title>
+
+		<meta name="description" content="Journal Club Presentation June 8th, 2022, University of Luxembourg">
+		<meta name="author" content="Kyunghoon Han">
+
+		<meta name="apple-mobile-web-app-capable" content="yes">
+		<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+
+		<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+
+		<link rel="stylesheet" href="dist/reset.css">
+		<link rel="stylesheet" href="dist/reveal.css">
+		<link rel="stylesheet" href="dist/theme/black.css">
+
+		<!-- Theme used for syntax highlighted code -->
+		<link rel="stylesheet" href="plugin/highlight/monokai.css">
+	</head>
+	<body>
+		<div class="reveal">
+			<div class="slides">
+				<section>
+					<h2>
+						Brownian bridges for stochastic chemical processes 
+					</h2>
+					<p>
+						<small>
+							Journal club presentation by <a href="https://kyunghoon-han.github.io">Kyunghoon Han</a>
+						</small>
+					</p>
+					<p>
+						<small>
+							Theoretical Chemical Physics Group, University of Luxembourg
+						</small>
+					</p>
+				</section>
+				<section>
+					<section>
+						<h2>Some facts on the paper</h2>
+						<p>
+							<small>
+							Title : Brownian bridges for stochastic chemical processes--An approximation method based on the asymptotic behavior of the backward Fokker-Planck equation
+							</small> 
+						</p>
+						<p>
+							<small>
+								Authors : Shiyan Wang, Anirudh Venkatesh, Doraiswami Ramkrishna, Vivek Narsimhan of Purdue University
+							</small>
+						</p>
+					</section>
+					<section>
+						<h2>Their goal?</h2>
+						<p><small>
+							A fast approximation method to generate Brownian bridge process without solving the Backward Fokker-Planck (BFP) equation
+						</small></p>
+					</section>
+					<section>
+						<h2> The game plan </h2>
+						<ol>
+							<li>Mathematical background</li>
+							<li>Problem described by the authors</li>
+							<li>Results and discussion</li>
+							<li>Relevance to my work?</li>
+						</ol>
+					</section>
+				</section>
+				<section>
+					<h2>Brownian motion</h2>
+					A <em>Brownian motion</em> is described by what is called a <em>Wiener process</em>, $W_t$, parametrized by a variable $t$, which is defined as:
+					<ol>
+						<li>$W_0 = 0$</li>
+						<li>$W_t-W_s \sim \mathcal{N}(0,t-s)$</li>
+						<li>Each increment of $W_t$ is independent and is almost surely continuous</li>
+					</ol>
+				</section>
+				<section>
+					<section>
+						<h2>Brownian Bridge?</h2>
+						<small>
+							Suppose $(\mathcal{M},g)$ is a Riemannian manifold with $\dim\mathcal{M} = n$. 
+							If $X_t(s)$ is a Brownian motion defined on $(\mathcal{M},g)$, parametrized by a variable $t$ such that $X(0)=x\in\mathcal{M}$.
+							The probability of finding $X_s(x)$ in some region $A\subset \mathcal{M}$, then, one may define:
+						</small>
+						$$
+							\mathbb{P}\left\{X_s(x)\in A\right\} = \int_{\mathcal{M}} 1_{A}(z)p(s,x,z) \text{ vol}(dz)
+						$$
+					</section>
+					<section>
+						Note that the quantity defined above is essentially computing the <em>expectation of finding the quantity in</em> $A$. 
+						The map $1_A$ is an <em>indicator function.</em>
+					</section>
+					<section>
+							Then the <em>Brownian bridge</em> from $x\in\mathcal{M}$ to $y\in\mathcal{M}$ with lifetime $T\geq 0$, denoted as $X^T(x,y)$, is defined as a <em>Brownian motion $X$ with $X_0=x$ and $X_T=y$</em> such that
+						\[\begin{aligned}
+							&\mathbb{P}\left\{X_s^T(x,y)\in A\right\} \\
+							&= \int_{\mathcal{M}} 1_A(z) \frac{p(s,x,z)p(T-s,z,y)}{p(T,x,y)}\text{ vol}(dz)
+						\end{aligned}\]
+					</section>
+					<section>
+						Essentially, the Brownian bridge considers a stochastic process where the random variable $X_t$ is tied down at $t=0$ and $t=T$.
+					</section>
+				</section>
+				<section>
+					<section>
+						<h2>Simple simulation of a Brownian bridge</h2>
+						<pre><code class="python" data-trim data-noescape><script type="text/template">
+						import numpy as np
+						from matplotlib import pyplot 
+							
+							def brownian_bridge(batches, steps):
+								dt = 1.0 / (steps - 1)
+								dt_sqrt = np.sqrt(dt)
+								B = np.empty((batches, steps), dtype=np.float32)
+								B[:, 0] = 0
+								for n in range(steps - 2):
+									t = n * dt
+									xi = np.random.randn(batches) * dt_sqrt
+									B[:, n + 1] = B[:, n] * (1 - dt / (1 - t)) + xi
+								B[:, -1] = 0
+								return B
+							
+						if __name__ == "__main__":
+							batches = # number of batches here
+							steps = # number of steps taken here
+							B = brownian_bridge(batches, steps)
+							pyplot.plot(B.T)
+						</script></code></pre>
+					</section>
+					<section>
+						<h2>5 batches and 50 steps</h2>
+						<img data-src="550.png" height="520" width="800">
+					</section>
+					<section>
+						<h2>10 batches and 100 steps</h2>
+						<img data-src="10100.png" height="520" width="800">
+					</section>
+					<section>
+						<h2>20 batches and 1500 steps</h2>
+						<img data-src="last.png" height="520" width="800">
+					</section>
+					<section>
+						<h2>50 batches and 20000 steps</h2>
+						<img data-src="last2.png" height="520" width="800">
+					</section>
+				</section>
+				
+				<section>
+					<section>
+						<h2>Stochastic D.E. in Itō form</h2>
+						<p>Givens<br>
+							<ol>
+								<li>$s$ - a parameter of the path taken ($0 < s < L$) </li>
+								<li>$\vec{x}(s)$ - position along the path</li>
+								<li>drift term $\vec{A}$: the term that <em>forces the position to change in some expected direction</em> </li>
+								<li>diffusion term $\vec{B}$: the random changes exerted on $\vec{x}$</li>
+							</ol>
+						</p>
+					</section>
+					<section>
+						$$
+						d\vec{x} = \vec{A}(s,\vec{x}(s))ds +\vec{B}(s,\vec{x}(s)) \cdot d\mathcal{B}
+						$$
+						<br>
+						Diffusion tensor: $D^{\mu\nu}=\frac{1}{2}B^\mu B^\nu$
+					</section>
+					<section>
+						<h2>Example: Langevin equation</h2>
+						<p>
+							Suppose $\vec{A}=-ㄷ\nabla U$, $ㄷ$ a drift coefficient, for some continuous dimensionless external potential $U(\vec{x})$.
+							Then the Itō's relation becomes:
+							$$
+							d\vec{x} = ㄷ\cdot \nabla U ds +\vec{B}\sqrt{ds}\cdot \vec{Z}
+							$$
+							where $\vec{Z} \sim \mathcal{N}^3(0,\vec{1})$.
+						</p>
+					</section>
+				</section>
+				<section>
+					<section>
+						<h2>Brownian bridge SDE?</h2>
+						<p>
+							An SDE that samples the conditional probability $P\left((\vec{s})|\vec{x}(0)=\vec{x}_0,\vec{x}(L)\in \Omega_L\right)$, i.e. a Brownian bridge $\vec{x}^{Br}$, is:
+							<br>
+							$$
+							d\vec{x}^{Br} = d\vec{x} + \underbrace{\vec{B}\vec{B}^T \frac{\partial}{\partial \vec{x}}\left(\ln q\right)}_{\text{additional drift}} ds 
+							$$
+							with $\vec{x}(0)=\vec{x}_0$. Where...
+						</p>
+					</section>
+					<section>
+						$q(\vec{x},s)$ is a hitting probability. <br>
+						Meaning that it is likely for the original random walk described by $d\vec{x}=\vec{A}ds + \vec{B} \cdot d\mathcal{B}$ to reach the target region, $\Omega_L$, at $s=L$. 
+					</section>
+					<section>
+						Physically speaking, the extra drift term could be described as an <em>entropic drift</em> that drives the path towards the end region. <br>
+						The physical entropic free-energy barrier for reaching the end-state in $\Omega_L$ is proportional to
+						$$
+							T\Delta S \sim -\beta \ln (q)
+						$$
+					</section>
+				</section>
+				<section>
+					<section>
+						<h2>Computation of the hitting probability?</h2>
+						Assuming that $q$ is a probability associated to a Markov chain, the backward Fokker-Planck equation is:
+						\[
+							\mathcal{L}^bq = \frac{\partial q}{\partial s} + \vec{A} \frac{\partial q}{\partial \vec{x}} + \frac{1}{2}\left(\vec{B}\vec{B}^T\right)\frac{\partial^2 q}{\partial \vec{x} \partial \vec{x}}
+						\]
+					</section>
+					<section>
+						where $q(\vec{x},s)$ is 1 if $\vec{x} \in \Omega_L$ and is zero if $\vec{x}$ could not reach the target region $\Omega_L$.
+					</section>
+					<section>
+						The backward integration of the above expression from $s=L$ to $s=0$ gives the hitting probability. But a numerical solution of this BFP is infeasible for high dimensional systems.
+					</section>
+				</section>
+				<section>
+					<section>
+						<h2>Path integral approach?</h2>
+						the probability of attaining a specific path of the SDE $d\vec{x}=\vec{A}ds + \vec{B}\cdot d\mathcal{B}$ is expressed discretely as...
+						<br>
+						$$
+						p\{\vec{x}\} \sim e^{-\frac{1}{2\Delta s}\sum_{k=0}^{N-1}\left(\Delta \vec{x}_k -\vec{A}\left(\vec{x}_k\right)\right)\cdot \left(\vec{B}\vec{B}^T\right)^{-1} \cdot \left(\Delta \vec{x}_k -\vec{A}\left(\vec{x}_k\right)\right)}
+						$$
+						where $ \Delta \vec{x}_k = \vec{x}_{k+1}-\vec{x}_k$.
+					</section>
+					<section>
+						For a Brownian bridge, we alter $\vec{A}\mapsto \vec{A}^\prime = \vec{A}\left(\vec{x}_k\right) + \vec{u}^d $ with $\vec{u}^d =\left(\vec{B}\vec{B}^T\right)\cdot \nabla_{\vec{x}}\ln(q)$.
+						$$
+						p\{\vec{x}\} \sim e^{-\frac{1}{2\Delta s}\sum_{k=0}^{N-1}\left(\Delta \vec{x}_k -\vec{A}^\prime\left(\vec{x}_k\right)\right)\cdot \left(\vec{B}\vec{B}^T\right)^{-1} \cdot \left(\Delta \vec{x}_k -\vec{A}^\prime\left(\vec{x}_k\right)\right)}
+						$$
+						the quantity $\vec{u}^d$ is called the <em>exact drift</em>.
+					</section>
+					<section>
+						In short, one may write the probability function associated to the Brownian bridge as
+						$$
+							p^{Br}\left\{\vec{x}\right\} \sim 1(\vec{x}(L)\in \Omega_L)p\{\vec{x}\}
+						$$
+						where $1$ is the indicator function.
+					</section>
+				</section>
+				<section>
+					<section>
+						<h2>Reweighting</h2>
+						Instead of using $q$ as the hitting probability, consider an approximate hitting probability $\psi$.
+					</section>
+					<section>
+						The object $\psi$ is defined to approximate the drift $\vec{u}^d$ as $\vec{u}^{ap}$ as:
+						$$
+							d\vec{x} = \left(\vec{A}+\vec{ap}\right)dt +\vec{B}\cdot d\mathcal{B} 
+						$$
+						where...
+					</section>
+					<section>
+						the approximated drift is 
+						$$
+							\vec{u}^{ap} = \left(\vec{B}\vec{B}^T\right) \cdot \nabla_{\vec{x}}\ln(\psi)
+						$$
+						which rewrites the expression of the <em>probability of attaining a path</em> under this approximation is...
+					</section>
+					<section>
+						Itō's formula then gives
+						\[\begin{aligned}
+						\Delta \ln(\psi) &= \frac{\partial \ln(\psi)}{\partial s}\Delta s \\
+						&+ \frac{\partial \ln(\psi)}{\partial \vec{x}}\Delta\vec{x} \\
+						&+ \frac{1}{2}(\vec{B}\vec{B}^T):\frac{\partial^2}{\partial \vec{x}\partial\vec{x}}\Delta s
+						\end{aligned}\]
+					</section>
+					<section>
+						Noting that $e^{\sum \Delta \ln \psi} \sim 1(\vec{x}(L)\in \Omega_L)$ and taking $\Delta s \rightarrow 0$, one gets
+						$$
+							p^{ap}\{\vec{x}\} \sim p^{Br}\{\vec{x}\}e^{-\int_0^L\mathcal{G}[\ln \psi] ds}
+						$$
+						where ... 
+					</section>
+					<section>
+						$$
+						\mathcal{G}[\ln \psi] = \frac{1}{\psi} \mathcal{L}\psi
+						$$
+					</section>
+				</section>
+				<section>
+					<h2>Ornstein-Uhlenbeck</h2>
+					$$
+					d\vec{x} = -k\vec{x}ds + \sigma d\mathcal{B}
+					$$
+					for $k$ being the drift constant and $\sigma$ being the volatility of the random fluctuations.
+				</section>
+				<section>
+					<h2>Geometric Brownian Motion</h2>
+					$$
+						d\vec{x} = k \vec{x}ds + \sigma \vec{x} d\mathcal{B}
+					$$
+				</section>
+				<section>
+					<h2>Result with Ornstein-Uhlenbeck</h2>
+						<img data-src="result1.png" height="450" width="680">
+				</section>
+				<section>
+					<section>
+						<h2>Normal bridge vs. introduced approximation</h2>
+						<img data-src="result2.png" height="450" width="680">
+					</section>
+					<section>
+						<h2>Naive sampling vs. introduced sampling</h2>
+						<img data-src="approx.png" height="450" width="680">
+					</section>
+				</section>
+				<section>
+					<img data-src="naive_and_brown.png" height="650" width="850">
+				</section>
+			</div>
+		</div>
+
+		<script src="dist/reveal.js"></script>
+		<script src="plugin/notes/notes.js"></script>
+		<script src="plugin/markdown/markdown.js"></script>
+		<script src="plugin/highlight/highlight.js"></script>
+		<script>
+			// More info about initialization & config:
+			// - https://revealjs.com/initialization/
+			// - https://revealjs.com/config/
+			Reveal.initialize({
+				hash: true,
+
+				// Learn about plugins: https://revealjs.com/plugins/
+				plugins: [ RevealMarkdown, RevealHighlight, RevealNotes ]
+			});
+		</script>
+		<script src="plugin/math/math.js"></script>
+		<script>
+		  Reveal.initialize({ plugins: [ RevealMath.KaTeX ] });
+		  Reveal.initialize({ slideNumber: true });
+		</script>
+	</body>
+</html>

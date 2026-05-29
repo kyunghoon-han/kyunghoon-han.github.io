@@ -1,0 +1,179 @@
+<!doctype html>
+<html>
+	<head>
+		<meta charset="utf-8">
+		<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+
+		<title>Hashing for TCP</title>
+
+		<link rel="stylesheet" href="dist/reset.css">
+		<link rel="stylesheet" href="dist/reveal.css">
+		<link rel="stylesheet" href="dist/theme/black.css">
+
+		<!-- Theme used for syntax highlighted code -->
+		<link rel="stylesheet" href="plugin/highlight/monokai.css">
+	</head>
+	<body>
+		<div class="reveal">
+			<div class="slides">
+				<section>
+					<h2>Hashing algorithms for TCP</h2>
+					<p>
+						<small>Kyunghoon Han</small>
+					</p>
+				</section>
+				<section>
+					<h2>
+						An ideal hashing algorithm...
+					</h2>
+					<p style="text-align:left;"> 
+						<input type="checkbox" /> 
+						is a one-way function
+					</p>
+					<p style="text-align:left;"> 
+						<input type="checkbox" /> 
+						shows significant avalanche effect 
+					</p>
+					<p style="text-align:left;"> 
+						<input type="checkbox" /> 
+						has fast computation speed
+					</p>
+					<p style="text-align:left;"> 
+						<input type="checkbox" /> 
+						is injective (dramatically)
+					</p>
+					<p style="text-align:left;"> 
+						<input type="checkbox" /> 
+						is deterministic
+					</p>
+				</section>
+				<section>
+					<section>
+						<h2>Simple MD5 with Python3</h2>
+						<pre data-id="code-animation"><code class="hljs" data-trim data-line-numbers>
+							from hashlib import md5
+
+							str_val = "Se fai fisica ti do una testata"
+							str_diff= "Se fai fisica ti do unP testata"
+
+							hashed  = md5(str_val.encode())
+							hashed_d= md5(str_val.encode())
+						</code></pre>
+					</section>
+					<section>
+						<h2>Differences?</h2>
+						<pre data-id="code-animation"><code class="hljs" data-trim data-line-numbers>
+							print("The first hashed sentence? \n")
+							print(hashed.hexdigest())
+							print("The second hashed sentence? \n")
+							print(hashed_d.hexdigest())
+						</code></pre>
+						
+						<pre data-id="code-animation"><code class="hljs" data-trim data-line-numbers>
+							The first hashed sentence?
+							49f75a928653d2efae3e501af30afd70
+							The second hashed sentence?
+							fe6c2c08643a137cdb8fc28f8ec25173
+						</code></pre>
+					</section>
+				</section>
+				<section>
+					<h2>How to hash a graph?</h2>
+					<p style="text-align:center;">
+						Common approach: Weisfeiler-Lehman kernel (2009)
+					</p>
+					<p style="text-align:left;">
+						Perform the following on the entire graph
+					</p>
+					<p style="text-align:left;">
+						<input type="checkbox" /> 
+						Sort: represent each node $v$ as a sorted list $\ell_v$ of its neighbours.
+					</p>
+					<p style="text-align:left;">
+						<input type="checkbox" /> 
+						Compress: compress the list into its hash value $h\left(\ell_v\right)$.
+					</p>
+					<p style="text-align:left;">
+						<input type="checkbox" /> 
+						Relabel: relabel $v$ with $h\left(\ell_v\right)$.
+					</p>
+				</section>
+				<section>
+					<section>
+						<h2>With Python's networkx</h2>
+						<pre data-id="code-animation"><code class="hljs" data-trim data-line-numbers>
+							import networkx as nx
+
+							graph = nx.Graph()
+							graph.add_edges_from(
+								[
+									(1,2, {"label": "A"}),
+									(2,3, {"label": "B"}),
+									(3,1, {"label": "A"}),
+									(1,4, {"label": "B"}),
+								]
+							)
+							nx.weisfeiler_lehman_graph_hash(graph)
+						</code></pre>
+						<p style="text-align:left;">the result is...<br>
+							'7bc4dde9a09d0b94c5097b219891d81a'</p>
+					</section>
+					<section>
+						<pre data-id="code-animation"><code class="hljs" data-trim data-line-numbers>
+							import networkx as nx
+
+							graph = nx.Graph()
+							graph.add_edges_from(
+								[
+									(1,2, {"label": "A"}),
+									(2,3, {"label": "B"}),
+									(3,4, {"label": "A"}),
+									(1,4, {"label": "B"}),
+								]
+							)
+							nx.weisfeiler_lehman_graph_hash(graph)
+						</code></pre>
+						<p style="text-align:left;">the result is...<br>
+							'20a60ed013bc1976376f734be7d8d92c' <br>
+						which seems promising... but</p>
+					</section>
+					<section>
+						<pre data-id="code-animation"><code class="hljs" data-trim data-line-numbers>
+							import networkx as nx
+
+							graph = nx.Graph()
+							graph.add_edges_from(
+								[
+									(1,2, {"label": "A"}),
+									(2,4, {"label": "B"}),
+									(3,1, {"label": "A"}),
+									(1,4, {"label": "B"}),
+								]
+							)
+							nx.weisfeiler_lehman_graph_hash(graph)
+						</code></pre>
+						<p style="text-align:left;">the result is...<br>
+							'7bc4dde9a09d0b94c5097b219891d81a' <br>
+						a single change (second node) couldn't produce the avalanche effect...</p>
+					</section>
+				</section>
+			</div>
+		</div>
+
+		<script src="dist/reveal.js"></script>
+		<script src="plugin/notes/notes.js"></script>
+		<script src="plugin/markdown/markdown.js"></script>
+		<script src="plugin/highlight/highlight.js"></script>
+		<script src="plugin/math/math.js"></script>
+		<script>
+			// More info about initialization & config:
+			// - https://revealjs.com/initialization/
+			// - https://revealjs.com/config/
+			Reveal.initialize({
+				hash: true,
+				// Learn about plugins: https://revealjs.com/plugins/
+				plugins: [ RevealMarkdown, RevealHighlight, RevealNotes, RevealMath ]
+			});
+		</script>
+	</body>
+</html>

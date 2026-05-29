@@ -120,7 +120,7 @@ const DESKTOP_ITEMS = [
   { id: 'cv', title: 'CV', icon: ICONS.cv,
     action: () => openPdfWindow({ title: 'CV', src: CONFIG.cv }) },
   { id: 'doom', title: 'DOOM', icon: ICONS.doom,
-    action: () => openIframeWindow({ title: 'DOOM', icon: ICONS.doom, src: 'htmls/doom.html' }) }
+    action: () => openIframeWindow({ title: 'DOOM', icon: ICONS.doom, src: 'https://github.com/kyunghoon-han/kyunghoon-han.github.io/htmls/doom.html' }) }
 ];
 
 const QUICK_LAUNCH = [

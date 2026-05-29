@@ -139,6 +139,8 @@ let activeId = null;
 
 const uid      = () => 'w_' + Math.random().toString(36).slice(2, 9);
 const isMobile = () => window.matchMedia('(max-width: 768px)').matches;
+const isTouch  = () => window.matchMedia('(hover: none) and (pointer: coarse)').matches
+  || ('ontouchstart' in window);
 
 function openWindow({ title, icon, contentEl, width = 480, height = 320, noPad = false }) {
   const id = uid();
@@ -587,14 +589,21 @@ function renderDesktop() {
     el.className = 'desktop-icon';
     el.tabIndex = 0;
     el.innerHTML = `<img class="icon" src="${item.icon}" alt="" /><span class="label">${escapeHtml(item.title)}</span>`;
-    let lastTap = 0;
-    el.addEventListener('click', () => {
+
+    const select = () => {
       container.querySelectorAll('.desktop-icon.selected').forEach((d) => d.classList.remove('selected'));
       el.classList.add('selected');
-      const now = Date.now();
-      if (now - lastTap < 350) item.action();
-      lastTap = now;
-    });
+    };
+
+    if (isTouch()) {
+      // Phones / touch devices: a single tap opens.
+      el.addEventListener('click', () => { select(); item.action(); });
+    } else {
+      // Desktop browsers: single click selects, double-click opens.
+      el.addEventListener('click', select);
+      el.addEventListener('dblclick', () => { select(); item.action(); });
+    }
+
     el.addEventListener('keydown', (e) => { if (e.key === 'Enter') item.action(); });
     container.appendChild(el);
   });

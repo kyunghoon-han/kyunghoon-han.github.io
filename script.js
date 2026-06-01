@@ -441,7 +441,7 @@ function openTextWindow(node) {
   const wrapper = document.createElement('div');
   wrapper.style.cssText = 'background:#fff;padding:14px;min-height:100%';
   const pre = document.createElement('pre');
-  pre.style.cssText = 'white-space:pre-wrap;font-family:"Pixelated MS Sans Serif",Arial,sans-serif;font-size:13px;margin:0';
+  pre.style.cssText = "white-space:pre-wrap;font-family:'JetBrains Mono','Nanum Gothic Coding',monospace;font-size:13px;margin:0";
   pre.textContent = node.body || '';
   wrapper.appendChild(pre);
   openWindow({
@@ -457,8 +457,8 @@ function openWelcomeWindow() {
   wrapper.style.cssText =
     'background:#fff;height:100%;overflow:auto;padding:' +
     (mobile ? '12px' : '16px 20px') +
-    ';font-family:"Pixelated MS Sans Serif",Arial,sans-serif;' +
-    'font-size:' + (mobile ? '13px' : '13px') + ';line-height:1.5;color:#222;';
+    ";font-family:'Nanum Gothic','Malgun Gothic',sans-serif;" +
+    'font-size:' + (mobile ? '14px' : '14px') + ';line-height:1.6;color:#222;';
 
   wrapper.innerHTML = `
     <h2 style="margin:0 0 .4em;font-size:${mobile ? '1.15em' : '1.3em'}">Welcome 👋</h2>

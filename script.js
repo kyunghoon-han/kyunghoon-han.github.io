@@ -450,6 +450,52 @@ function openTextWindow(node) {
   });
 }
 
+function openWelcomeWindow() {
+  const mobile = isMobile();
+
+  const wrapper = document.createElement('div');
+  wrapper.style.cssText =
+    'background:#fff;height:100%;overflow:auto;padding:' +
+    (mobile ? '12px' : '16px 20px') +
+    ';font-family:"Pixelated MS Sans Serif",Arial,sans-serif;' +
+    'font-size:' + (mobile ? '13px' : '13px') + ';line-height:1.5;color:#222;';
+
+  wrapper.innerHTML = `
+    <h2 style="margin:0 0 .4em;font-size:${mobile ? '1.15em' : '1.3em'}">Welcome 👋</h2>
+    <p style="margin:.4em 0">
+      This is <b>KH's personal site</b> — a portfolio dressed up as a Windows&nbsp;98 desktop.
+      Double-click the icons (or tap on mobile), or use the <b>Start</b> menu, to open windows.
+      You'll find my <b>Notebook</b> of writings, interactive scientific <b>Visualizations</b>
+      from my research on molecular vibrations, my <b>CV</b>, and links out to Scholar, GitHub
+      and LinkedIn.
+    </p>
+    <p style="margin:.6em 0 .3em"><b>And yes, that's DOOM.</b></p>
+    <p style="margin:.3em 0">
+      DOOM (1993, id Software) is the legendary first-person shooter that more or less invented
+      the genre. It has since become a running joke among programmers: "<i>can it run DOOM?</i>" —
+      because people have ported it to everything from calculators to printers to pregnancy tests.
+      The copy here runs entirely in your browser, which is mostly an excuse to show that this
+      site can host that sort of thing too.
+    </p>
+    <p style="margin:.6em 0 0;color:#555;font-size:.92em">
+      You can close this window — it'll come back on refresh.
+    </p>
+  `;
+
+  const width  = mobile ? Math.min(window.innerWidth - 24, 340)
+                        : Math.min(520, window.innerWidth - 60);
+  const height = mobile ? Math.min(window.innerHeight - 120, 440)
+                        : 380;
+
+  openWindow({
+    title:     "Welcome — Read Me",
+    icon:      ICONS.text,
+    contentEl: wrapper,
+    width, height,
+    noPad:     true
+  });
+}
+
 async function openMdWindow(node) {
   const wrapper = document.createElement('div');
   wrapper.className = 'md-wrapper';
@@ -763,6 +809,8 @@ document.addEventListener('DOMContentLoaded', () => {
   renderStartMenu();
   tickClock();
   setInterval(tickClock, 15000);
+
+  openWelcomeWindow();
 
   document.getElementById('start-button').addEventListener('click', (e) => {
     e.stopPropagation();

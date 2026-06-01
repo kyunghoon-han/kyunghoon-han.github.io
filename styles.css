@@ -109,6 +109,19 @@ html, body {
 .window-instance.minimized { display: none; }
 
 .title-bar-text { display: flex; align-items: center; gap: 4px; }
+
+/* Slightly larger title bar + control buttons (default 98.css is a bit cramped) */
+.window-instance .title-bar {
+  min-height: 24px;
+  padding: 4px 3px 4px 6px;
+}
+.window-instance .title-bar-controls button {
+  min-width: 20px;
+  width: 20px;
+  height: 18px;
+  margin-left: 3px;
+  background-size: auto;
+}
 .title-icon { width: 14px; height: 14px; image-rendering: pixelated; }
 .title-bar { cursor: move; }
 .window-instance.maximized .title-bar { cursor: default; }

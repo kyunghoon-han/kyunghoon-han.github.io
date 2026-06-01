@@ -457,48 +457,67 @@ function openWelcomeWindow() {
 
   const wrapper = document.createElement('div');
   wrapper.style.cssText =
-    'background:#fff;height:100%;overflow:auto;padding:' +
-    (mobile ? '12px' : '16px 20px') +
-    ';font-family:var(--ui-font);' +
-    'font-size:' + (mobile ? '14px' : '14px') + ';line-height:1.6;color:#222;';
+    'background:#fff;height:100%;overflow:auto;box-sizing:border-box;padding:' +
+    (mobile ? '12px 14px' : '16px 20px') +
+    ';font-family:var(--ui-font);font-size:14px;' +
+    'line-height:' + (mobile ? '1.5' : '1.6') + ';color:#222;';
 
-  wrapper.innerHTML = `
-    <h2 style="margin:0 0 .4em;font-size:${mobile ? '1.15em' : '1.3em'}">Welcome 👋</h2>
-    <p style="margin:.4em 0">
-      This is <b>KH's personal site</b> — a portfolio dressed up as a Windows&nbsp;98 desktop.
-      Double-click the icons (or tap on mobile), or use the <b>Start</b> menu, to open windows.
-      You'll find my <b>Notebook</b> of writings, interactive scientific <b>Visualizations</b>
-      from my research, my <b>CV</b>, and links out to Scholar, GitHub and LinkedIn.
-    </p>
-    <p style="margin:.6em 0 .3em"><b>And yes, that's DOOM.</b></p>
-    <p style="margin:.3em 0">
-      DOOM (1993, id Software) is the legendary first-person shooter that more or less invented
-      the genre. It has since become a running joke among programmers: "<i>can it run DOOM?</i>" —
-      because people have ported it to everything from calculators to printers to pregnancy tests.
-      The copy here runs entirely in your browser, which is mostly an excuse to show that this
-      site can host that sort of thing too.
-    </p>
-    <p style="margin:.6em 0 0;color:#555;font-size:.92em">
-      You can close this window — it'll come back on refresh.
-    </p>
-  `;
+  if (mobile) {
+    // Shorter copy for phones — just the essentials.
+    wrapper.innerHTML = `
+      <h2 style="margin:0 0 .4em;font-size:1.15em">Welcome 👋</h2>
+      <p style="margin:.4em 0">
+        <b>KH's personal site</b>, dressed up as a Windows&nbsp;98 desktop.
+        Tap the icons or the <b>Start</b> menu to open my <b>Notebook</b>,
+        <b>Visualizations</b>, <b>CV</b> and links.
+      </p>
+      <p style="margin:.5em 0 .2em"><b>And yes, that's DOOM</b> 🎮</p>
+      <p style="margin:.2em 0">
+        The 1993 shooter, running in your browser — because half the fun of a
+        site is showing it <i>can</i> run DOOM.
+      </p>
+      <p style="margin:.5em 0 0;color:#555;font-size:.9em">
+        Close this anytime — it returns on refresh.
+      </p>`;
+  } else {
+    wrapper.innerHTML = `
+      <h2 style="margin:0 0 .4em;font-size:1.3em">Welcome 👋</h2>
+      <p style="margin:.4em 0">
+        This is <b>KH's personal site</b> — a portfolio dressed up as a Windows&nbsp;98 desktop.
+        Double-click the icons (or tap on mobile), or use the <b>Start</b> menu, to open windows.
+        You'll find my <b>Notebook</b> of writings, interactive scientific <b>Visualizations</b>
+        from some of my research, my <b>CV</b>, and links out to Scholar, GitHub and LinkedIn.
+      </p>
+      <p style="margin:.6em 0 .3em"><b>And yes, that's DOOM.</b></p>
+      <p style="margin:.3em 0">
+        DOOM (1993, id Software) is the legendary first-person shooter that more or less invented
+        the genre. It has since become a running joke among programmers: "<i>can it run DOOM?</i>" —
+        because people have ported it to everything from calculators to printers to pregnancy tests.
+        The copy here runs entirely in your browser, which is mostly an excuse to show that this
+        site can host that sort of thing too.
+      </p>
+      <p style="margin:.6em 0 0;color:#555;font-size:.92em">
+        You can close this window — it'll come back on refresh.
+      </p>`;
+  }
 
   let width, height, left, top;
   if (mobile) {
-    // Smaller and pushed down so the desktop icon grid stays visible up top.
-    width  = Math.min(window.innerWidth - 24, 360);
-    height = Math.min(Math.round(window.innerHeight * 0.5), 380);
+    // Compact card pinned to the lower screen so the icon grid stays clear up top.
+    width  = Math.min(window.innerWidth - 24, 340);
+    height = Math.min(Math.round(window.innerHeight * 0.42), 320);
     left   = Math.round((window.innerWidth - width) / 2);
-    // sit in the lower portion; 48px taskbar is at the very top
-    top    = Math.min(window.innerHeight - height - 16,
-                      Math.round(window.innerHeight * 0.46));
+    top    = Math.min(window.innerHeight - height - 14,
+                      Math.round(window.innerHeight * 0.52));
   } else {
-    // Shifted well to the right so it clears the left-hand icon column.
-    width  = Math.min(520, window.innerWidth - 60);
-    height = 380;
-    left   = Math.min(window.innerWidth - width - 24,
-                      Math.max(200, Math.round(window.innerWidth * 0.38)));
-    top    = Math.max(20, Math.round((window.innerHeight - 48 - height) / 3) + 24);
+    // Sit just right of the left-hand icon column, with comfortable margin —
+    // not slammed against the right edge.
+    width  = Math.min(500, Math.round(window.innerWidth * 0.40));
+    height = 400;
+    const idealLeft = 320;            // clears icon column + labels comfortably
+    const maxLeft   = window.innerWidth - width - 32;
+    left   = Math.max(240, Math.min(idealLeft, maxLeft));
+    top    = Math.max(24, Math.round((window.innerHeight - 48 - height) / 3) + 24);
   }
 
   const id = openWindow({
@@ -509,8 +528,8 @@ function openWelcomeWindow() {
     noPad:     true
   });
 
-  // On mobile, styles.css forces .window-instance to fullscreen via !important;
-  // tag this window so the override CSS can exempt it.
+  // styles.css forces .window-instance fullscreen on mobile via !important;
+  // tagging this window lets the :not(.welcome-window) rule exempt it.
   const w = wins.get(id);
   if (w) w.el.classList.add('welcome-window');
 }

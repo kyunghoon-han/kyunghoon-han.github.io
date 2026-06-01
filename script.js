@@ -142,12 +142,14 @@ const isMobile = () => window.matchMedia('(max-width: 768px)').matches;
 const isTouch  = () => window.matchMedia('(hover: none) and (pointer: coarse)').matches
   || ('ontouchstart' in window);
 
-function openWindow({ title, icon, contentEl, width = 480, height = 320, noPad = false }) {
+function openWindow({ title, icon, contentEl, width = 480, height = 320, noPad = false, left = null, top = null }) {
   const id = uid();
 
   const offset = (wins.size % 8) * 22;
-  const startX = Math.max(20, Math.round((window.innerWidth  - width)  / 2) + offset - 96);
-  const startY = Math.max(10, Math.round((window.innerHeight - 48 - height) / 3) + offset);
+  const startX = left !== null ? left
+    : Math.max(20, Math.round((window.innerWidth  - width)  / 2) + offset - 96);
+  const startY = top !== null ? top
+    : Math.max(10, Math.round((window.innerHeight - 48 - height) / 3) + offset);
 
   const el = document.createElement('div');
   el.className = 'window window-instance';
@@ -441,7 +443,7 @@ function openTextWindow(node) {
   const wrapper = document.createElement('div');
   wrapper.style.cssText = 'background:#fff;padding:14px;min-height:100%';
   const pre = document.createElement('pre');
-  pre.style.cssText = "white-space:pre-wrap;font-family:'JetBrains Mono','Nanum Gothic Coding',monospace;font-size:13px;margin:0";
+  pre.style.cssText = 'white-space:pre-wrap;font-family:var(--code-font);font-size:13px;margin:0';
   pre.textContent = node.body || '';
   wrapper.appendChild(pre);
   openWindow({
@@ -457,7 +459,7 @@ function openWelcomeWindow() {
   wrapper.style.cssText =
     'background:#fff;height:100%;overflow:auto;padding:' +
     (mobile ? '12px' : '16px 20px') +
-    ";font-family:'Nanum Gothic','Malgun Gothic',sans-serif;" +
+    ';font-family:var(--ui-font);' +
     'font-size:' + (mobile ? '14px' : '14px') + ';line-height:1.6;color:#222;';
 
   wrapper.innerHTML = `
@@ -466,8 +468,7 @@ function openWelcomeWindow() {
       This is <b>KH's personal site</b> — a portfolio dressed up as a Windows&nbsp;98 desktop.
       Double-click the icons (or tap on mobile), or use the <b>Start</b> menu, to open windows.
       You'll find my <b>Notebook</b> of writings, interactive scientific <b>Visualizations</b>
-      from my research on molecular vibrations, my <b>CV</b>, and links out to Scholar, GitHub
-      and LinkedIn.
+      from my research, my <b>CV</b>, and links out to Scholar, GitHub and LinkedIn.
     </p>
     <p style="margin:.6em 0 .3em"><b>And yes, that's DOOM.</b></p>
     <p style="margin:.3em 0">
@@ -482,18 +483,36 @@ function openWelcomeWindow() {
     </p>
   `;
 
-  const width  = mobile ? Math.min(window.innerWidth - 24, 340)
-                        : Math.min(520, window.innerWidth - 60);
-  const height = mobile ? Math.min(window.innerHeight - 120, 440)
-                        : 380;
+  let width, height, left, top;
+  if (mobile) {
+    // Smaller and pushed down so the desktop icon grid stays visible up top.
+    width  = Math.min(window.innerWidth - 24, 360);
+    height = Math.min(Math.round(window.innerHeight * 0.5), 380);
+    left   = Math.round((window.innerWidth - width) / 2);
+    // sit in the lower portion; 48px taskbar is at the very top
+    top    = Math.min(window.innerHeight - height - 16,
+                      Math.round(window.innerHeight * 0.46));
+  } else {
+    // Shifted well to the right so it clears the left-hand icon column.
+    width  = Math.min(520, window.innerWidth - 60);
+    height = 380;
+    left   = Math.min(window.innerWidth - width - 24,
+                      Math.max(200, Math.round(window.innerWidth * 0.38)));
+    top    = Math.max(20, Math.round((window.innerHeight - 48 - height) / 3) + 24);
+  }
 
-  openWindow({
+  const id = openWindow({
     title:     "Welcome — Read Me",
     icon:      ICONS.text,
     contentEl: wrapper,
-    width, height,
+    width, height, left, top,
     noPad:     true
   });
+
+  // On mobile, styles.css forces .window-instance to fullscreen via !important;
+  // tag this window so the override CSS can exempt it.
+  const w = wins.get(id);
+  if (w) w.el.classList.add('welcome-window');
 }
 
 async function openMdWindow(node) {

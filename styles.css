@@ -7,6 +7,10 @@
   --window-frame:      #2a1f10;   /* warm near-black for crisp outlines */
   --dialog-gray:       #a89378;
   --dialog-gray-light: #c8b89a;
+
+  /* ===== Fonts ===== */
+  --ui-font:   'Nanum Gothic', 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
+  --code-font: 'JetBrains Mono', 'Nanum Gothic Coding', 'Courier New', monospace;
 }
 
 /* ===== Base ===== */
@@ -16,7 +20,7 @@ html, body {
   padding: 0;
   height: 100%;
   overflow: hidden;
-  font-family: "Pixelated MS Sans Serif", Arial, sans-serif;
+  font-family: var(--ui-font);
   font-size: 12px;
   user-select: none;
   -webkit-user-select: none;
@@ -508,12 +512,19 @@ html, body {
   }
   .desktop-icon { width: auto; }
 
-  .window-instance {
+  .window-instance:not(.welcome-window) {
     top: 0 !important;
     left: 0 !important;
     width: 100% !important;
     height: 100% !important;
   }
+  /* Welcome window stays floating + sized via inline JS so the desktop
+     icons remain visible behind/around it on mobile. */
+  .welcome-window {
+    min-width: 0;
+    min-height: 0;
+  }
+  .welcome-window .resize-handle { display: none; }
   .window-instance .title-bar { cursor: default; }
   .resize-handle { display: none; }
 
@@ -538,7 +549,7 @@ html, body {
   background: #ffffff;
   padding: 28px 36px 40px;
   min-height: 100%;
-  font-family: Georgia, "Times New Roman", serif;
+  font-family: var(--ui-font);
   font-size: 14px;
   line-height: 1.65;
   color: #222;
@@ -549,11 +560,11 @@ html, body {
 
 .md-wrapper h1, .md-wrapper h2, .md-wrapper h3,
 .md-wrapper h4, .md-wrapper h5, .md-wrapper h6 {
-  font-family: Verdana, Tahoma, Geneva, sans-serif;
+  font-family: var(--ui-font);
   color: #2a3a5a;
   margin: 1.4em 0 0.5em;
   line-height: 1.3;
-  font-weight: bold;
+  font-weight: 800;
 }
 .md-wrapper h1 {
   font-size: 1.7em;
@@ -568,7 +579,7 @@ html, body {
 .md-wrapper p { margin: 0.85em 0; }
 
 .md-wrapper code {
-  font-family: "Courier New", Consolas, monospace;
+  font-family: var(--code-font);
   background: #f4eede;
   padding: 1px 5px;
   border: 1px solid #d4c5a2;
@@ -639,10 +650,10 @@ html, body {
 }
 .md-wrapper .article-title {
   margin: 0;
-  font-family: Verdana, Tahoma, Geneva, sans-serif;
+  font-family: var(--ui-font);
   color: #2a3a5a;
   font-size: 1.8em;
-  font-weight: bold;
+  font-weight: 800;
   border: 0;
   padding: 0;
   line-height: 1.25;
@@ -655,7 +666,7 @@ html, body {
 }
 .md-wrapper .article-info {
   margin: 0.7em 0 0;
-  font-family: Verdana, Tahoma, Geneva, sans-serif;
+  font-family: var(--ui-font);
   font-size: 0.85em;
   color: #777;
   letter-spacing: 0.02em;
@@ -676,7 +687,7 @@ html, body {
   padding: 32px;
   text-align: center;
   color: #555;
-  font-family: Verdana, sans-serif;
+  font-family: var(--ui-font);
   font-size: 13px;
 }
 .md-error code {

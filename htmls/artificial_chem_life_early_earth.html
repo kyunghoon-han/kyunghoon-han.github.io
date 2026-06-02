@@ -547,16 +547,21 @@ function renderTree(){
     var r=nd.isAlive?4:2.5;
     treeCtx.textAlign=nd.sp.parent?"left":"right";
     var lx=nd.sp.parent?p.x+r+3:p.x-r-3;
-    // In export mode, draw a soft light halo behind dark text so it stays legible over edges.
+    treeCtx.font=(nd.isAlive?"bold ":"")+"8px monospace";
+    // In export mode, give dark text a soft light glow (shadow) so it stays legible over
+    // colored edges. Using shadowBlur rather than strokeText avoids miter "spikes" entirely.
     if(EXPORT_MODE){
-      treeCtx.lineWidth=3;treeCtx.strokeStyle="rgba(255,255,255,0.85)";
-      treeCtx.strokeText(nd.sp.name,lx,p.y+3);
-      treeCtx.fillStyle=nd.isAlive?"#1a202c":"#718096";
+      treeCtx.save();
+      treeCtx.shadowColor="rgba(255,255,255,0.9)";
+      treeCtx.shadowBlur=3;treeCtx.shadowOffsetX=0;treeCtx.shadowOffsetY=0;
+      treeCtx.fillStyle=nd.isAlive?"#1a202c":"#5a6678";
+      treeCtx.fillText(nd.sp.name,lx,p.y+3);   // first pass lays down the glow
+      treeCtx.fillText(nd.sp.name,lx,p.y+3);   // second pass darkens text crisply over it
+      treeCtx.restore();
     }else{
       treeCtx.fillStyle=nd.isAlive?"#e2e8f0":"#4a5568";
+      treeCtx.fillText(nd.sp.name,lx,p.y+3);
     }
-    treeCtx.font=(nd.isAlive?"bold ":"")+"8px monospace";
-    treeCtx.fillText(nd.sp.name,lx,p.y+3);
   }
 
   // Depth axis labels

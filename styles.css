@@ -9,8 +9,8 @@
   --dialog-gray-light: #c8b89a;
 
   /* ===== Fonts ===== */
-  --ui-font:   'Nanum Gothic', 'Malgun Gothic', 'Apple SD Gothic Neo', sans-serif;
-  --code-font: 'JetBrains Mono', 'Nanum Gothic Coding', 'Courier New', monospace;
+  --ui-font:   'Noto Sans', 'Nanum Gothic', 'Apple SD Gothic Neo', 'Malgun Gothic', sans-serif;
+  --code-font: 'JetBrains Mono', 'Courier New', monospace;
 }
 
 /* ===== Base ===== */

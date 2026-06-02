@@ -26,6 +26,16 @@ html, body {
   -webkit-user-select: none;
 }
 
+/* 98.css applies "Pixelated MS Sans Serif" directly to this selector list,
+   which out-specifies a plain `body` rule. Re-declare the same list so our
+   font wins (this stylesheet loads after 98.css). Keep 98.css's small UI
+   font-size; just swap the family. */
+button, label, input, legend, textarea, select, option,
+table, ul.tree-view, .window, .title-bar, li[role="tab"] {
+  font-family: var(--ui-font);
+  -webkit-font-smoothing: antialiased;
+}
+
 /* ===== Desktop (with painting wallpaper, bar at top) ===== */
 #desktop {
   position: fixed;

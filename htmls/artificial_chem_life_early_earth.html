@@ -115,15 +115,14 @@ function stepSim(){
           if(Math.random()<prob*P.reactionProb){
             var env=ENV_MOLECULES[Math.floor(Math.random()*ENV_MOLECULES.length)];
             var getOrMake=function(freqs,sp1,sp2){
-              var sp=findSpecies(sim.species,freqs);
-              if(!sp&&sim.species.length<P.maxSpecies){
-                var d1=sp1._depth!==undefined?sp1._depth:0;var d2=sp2._depth!==undefined?sp2._depth:0;
-                sp={id:sim.nsid++,name:randName(),freqs:freqs,parent:[sp1.id,sp2.id],birthStep:sim.step,depth:Math.max(d1,d2)+1,_depth:Math.max(d1,d2)+1};
-                sim.species.push(sp);sim.speciation++;
-                events.unshift("\u26A1 "+sp.name+" ["+freqs+"] from "+sp1.name+"+"+sp2.name+" ("+env.name+")");
-                if(events.length>60)events.length=60;
-              }
-              return sp||(Math.random()<.5?sp1:sp2);
+              if(sim.species.length>=P.maxSpecies) return Math.random()<.5?sp1:sp2;
+              var d1=sp1._depth!==undefined?sp1._depth:0;var d2=sp2._depth!==undefined?sp2._depth:0;
+              var sp={id:sim.nsid++,name:randName(),freqs:freqs,parent:[sp1.id,sp2.id],
+                birthStep:sim.step,depth:Math.max(d1,d2)+1,_depth:Math.max(d1,d2)+1};
+              sim.species.push(sp);sim.speciation++;
+              events.unshift("\u26A1 "+sp.name+" ["+freqs+"] from "+sp1.name+"+"+sp2.name);
+              if(events.length>60)events.length=60;
+              return sp;
             };
             var ps1=getOrMake(prodFreqs(s1.freqs,s2.freqs,env.boost),s1,s2);
             var ps2=getOrMake(prodFreqs(s1.freqs,s2.freqs,env.boost),s1,s2);
@@ -155,6 +154,25 @@ function stepSim(){
     var surviving=[];for(var i=0;i<m.length;i++)if(!rmSet[i])surviving.push(m[i]);
     sim.mols=surviving.concat(add).concat(envAdd);
     while(sim.mols.length>P.maxPop)sim.mols.splice(Math.floor(Math.random()*sim.mols.length),1);
+    // prune extinct species so the cap tracks living lineages, not all-time count
+    if(sim.step%50<P.simSpeed){
+      var living={};for(var i=0;i<sim.mols.length;i++)living[sim.mols[i].speciesId]=true;
+      // keep living species AND any species that is an ancestor of a living one
+      var keep={};
+      for(var i=0;i<sim.species.length;i++){
+        var sp=sim.species[i];
+        if(living[sp.id]||!sp.parent){keep[sp.id]=true;}
+      }
+      // walk parents of living species upward to preserve lineage chains for the tree
+      var frontier=Object.keys(living).map(Number);
+      while(frontier.length){
+        var id=frontier.pop();var sp=null;
+        for(var j=0;j<sim.species.length;j++)if(sim.species[j].id===id){sp=sim.species[j];break;}
+        if(sp&&sp.parent)for(var k=0;k<sp.parent.length;k++)
+          if(sp.parent[k]!==-1&&!keep[sp.parent[k]]){keep[sp.parent[k]]=true;frontier.push(sp.parent[k]);}
+      }
+      sim.species=sim.species.filter(function(s){return keep[s.id];});
+    }
     while(sim.mols.length<P.minPop){var rsp=sim.species[Math.floor(Math.random()*Math.min(P.initialSpecies,sim.species.length))];sim.mols.push(mkMol(sim.nid++,rsp.id,rsp.freqs));}
     m=sim.mols;
   }

@@ -736,11 +736,12 @@
                 <p>
                     The audio players above are the FIMD energy traces &mdash; recordings of ΔPE(t) for each band.
                     The keyboard plays those same recordings. Each band's clip is embedded in this page as a short,
-                    seamlessly looped sample together with its measured dominant pitch (found offline by an
-                    FFT-interpolated spectral peak). Pressing a key <strong>transposes the real recorded sound</strong>
-                    to the chosen note (playback rate = note frequency / base frequency), and "Twinkle Twinkle" is
-                    sequenced from the same band recording. The keys therefore come straight from the band's energy
-                    fluctuations rather than from a synthesized approximation.
+                    seamlessly looped sample. All bands are transposed by the <strong>same reference</strong> (playback
+                    rate = note frequency / anchor), so pressing C4 plays every band at its own recorded pitch and
+                    higher keys shift all bands up by the same musical interval. This keeps "Twinkle Twinkle"
+                    recognizable in any band while preserving the clear pitch differences between bands (the low band
+                    sits near 128&nbsp;Hz, the highest near 1&nbsp;kHz). The keys therefore come straight from the
+                    band's energy fluctuations rather than from a synthesized approximation.
                 </p>
                 <p>
                     Because the audio is embedded, the keyboard works whether the page is opened directly from disk or
@@ -814,7 +815,10 @@
         ];
         var CENTER_MIN = 450, CENTER_MAX = 3000;
         var currentBand = BANDS[0];
-        var REF_NOTE_FREQ = 261.63; // C4: the recorded sample is mapped here, other keys transpose it
+        var REF_NOTE_FREQ = 261.63; // C4
+        // Single shared anchor: pressing this note (C4) plays every band at its OWN recorded pitch,
+        // so the natural pitch differences between bands are preserved across the keyboard.
+        var ANCHOR_FREQ = 261.63;
 
         function clamp(x, a, b) { return Math.max(a, Math.min(b, x)); }
         function lerp(a, b, t) { return a + (b - a) * t; }
@@ -904,7 +908,7 @@
             var src = audioCtx.createBufferSource();
             src.buffer = s.buffer;
             src.loop = true;
-            src.playbackRate.value = noteFreq / s.baseFreq;
+            src.playbackRate.value = noteFreq / ANCHOR_FREQ;
             var amp = audioCtx.createGain();
             amp.gain.value = 0;
             src.connect(amp); amp.connect(masterGain);
@@ -920,7 +924,7 @@
             var src = audioCtx.createBufferSource();
             src.buffer = s.buffer;
             src.loop = true;
-            src.playbackRate.value = noteFreq / s.baseFreq;
+            src.playbackRate.value = noteFreq / ANCHOR_FREQ;
             var amp = audioCtx.createGain();
             amp.gain.value = 0;
             src.connect(amp); amp.connect(masterGain);
@@ -959,9 +963,10 @@
         }
         function buildSynth(freq, band) {
             var p = synthParams(band);
+            var nativePitch = (BAND_BASE[band.id] || ANCHOR_FREQ);
             var osc = audioCtx.createOscillator();
             osc.setPeriodicWave(waveForBand(band));
-            osc.frequency.value = freq;
+            osc.frequency.value = freq * nativePitch / ANCHOR_FREQ;
             var amp = audioCtx.createGain(); amp.gain.value = 0;
             var trem = audioCtx.createGain(); trem.gain.value = 1;
             var lfo = audioCtx.createOscillator(); lfo.frequency.value = p.tremRate;
@@ -1062,7 +1067,8 @@
                 var f = sample[currentBand.id].baseFreq;
                 audioStatus.className = "status ok";
                 audioStatus.innerHTML = "▶ Using the recorded energy-fluctuation audio for " + b +
-                    " (base pitch ≈ " + f.toFixed(1) + " Hz; keys transpose this real sound).";
+                    " (native pitch ≈ " + f.toFixed(1) + " Hz). Press C4 to hear it at its recorded pitch; " +
+                    "other keys transpose it. Bands keep their distinct pitches.";
             } else if (st === "loading") {
                 audioStatus.className = "status loading";
                 audioStatus.textContent = "Decoding recorded audio for " + b + "…";

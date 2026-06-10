@@ -245,6 +245,221 @@
             margin-top: 5px;
         }
 
+        /* ===== Interactive instrument ===== */
+        .instrument {
+            margin-top: 40px;
+            background: linear-gradient(135deg, #1b1f3a 0%, #2a1f4a 100%);
+            border-radius: 14px;
+            padding: 30px;
+            color: #eef0ff;
+            box-shadow: 0 8px 30px rgba(0,0,0,0.25);
+        }
+
+        .instrument h2 {
+            font-size: 2em;
+            margin-bottom: 10px;
+            text-align: center;
+            color: #fff;
+        }
+
+        .instrument .lead {
+            text-align: center;
+            opacity: 0.9;
+            max-width: 760px;
+            margin: 0 auto 24px;
+            font-size: 1.02em;
+        }
+
+        .controls {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 24px;
+            justify-content: center;
+            align-items: flex-end;
+            margin-bottom: 26px;
+        }
+
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .control-group > span.control-title {
+            font-size: 0.8em;
+            letter-spacing: 0.08em;
+            text-transform: uppercase;
+            opacity: 0.7;
+        }
+
+        .band-picker {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+            max-width: 640px;
+        }
+
+        .band-btn {
+            background: rgba(255,255,255,0.08);
+            border: 1px solid rgba(255,255,255,0.18);
+            color: #dfe2ff;
+            padding: 9px 13px;
+            border-radius: 999px;
+            cursor: pointer;
+            font-size: 0.92em;
+            font-family: inherit;
+            transition: background 0.15s, transform 0.05s, border-color 0.15s;
+        }
+
+        .band-btn:hover { background: rgba(255,255,255,0.16); }
+        .band-btn:active { transform: translateY(1px); }
+
+        .band-btn.active {
+            background: linear-gradient(135deg, #8a7dff 0%, #b07dff 100%);
+            border-color: #c9bcff;
+            color: #fff;
+            box-shadow: 0 3px 12px rgba(160,125,255,0.5);
+        }
+
+        .band-btn small {
+            display: block;
+            font-size: 0.78em;
+            opacity: 0.75;
+            font-style: italic;
+        }
+
+        .slider-row {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-size: 0.9em;
+        }
+
+        .slider-row input[type=range] { accent-color: #b07dff; width: 130px; }
+
+        .play-song-btn {
+            background: linear-gradient(135deg, #4caf6f 0%, #2e9e8f 100%);
+            border: none;
+            color: #fff;
+            padding: 12px 22px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-size: 1.05em;
+            font-family: inherit;
+            font-weight: 600;
+            box-shadow: 0 4px 14px rgba(46,158,143,0.45);
+            transition: transform 0.05s, filter 0.15s;
+        }
+
+        .play-song-btn:hover { filter: brightness(1.08); }
+        .play-song-btn:active { transform: translateY(1px); }
+        .play-song-btn:disabled { opacity: 0.55; cursor: default; }
+
+        /* Piano keyboard */
+        .piano-wrap {
+            overflow-x: auto;
+            padding: 10px 4px 20px;
+            -webkit-overflow-scrolling: touch;
+        }
+
+        .piano {
+            position: relative;
+            display: flex;
+            height: 200px;
+            width: max-content;
+            margin: 0 auto;
+            user-select: none;
+            touch-action: manipulation;
+        }
+
+        .key {
+            position: relative;
+            box-sizing: border-box;
+            cursor: pointer;
+        }
+
+        .key.white {
+            width: 56px;
+            height: 200px;
+            background: linear-gradient(#fff 0%, #f0f0f5 100%);
+            border: 1px solid #c5c5d5;
+            border-radius: 0 0 7px 7px;
+            z-index: 1;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            padding-bottom: 10px;
+        }
+
+        .key.black {
+            width: 36px;
+            height: 124px;
+            background: linear-gradient(#3a3a4a 0%, #14141f 100%);
+            border: 1px solid #000;
+            border-radius: 0 0 5px 5px;
+            margin-left: -18px;
+            margin-right: -18px;
+            z-index: 2;
+            display: flex;
+            flex-direction: column;
+            justify-content: flex-end;
+            align-items: center;
+            padding-bottom: 8px;
+            box-shadow: 0 3px 4px rgba(0,0,0,0.4);
+        }
+
+        .key .keycap {
+            font-size: 0.72em;
+            font-weight: 700;
+            color: #9a9ab5;
+            pointer-events: none;
+        }
+
+        .key.black .keycap { color: #c7c7e0; }
+
+        .key .notename {
+            font-size: 0.62em;
+            color: #c0c0d0;
+            pointer-events: none;
+            margin-top: 2px;
+        }
+
+        .key.black .notename { color: #8e8eb0; }
+
+        .key.white.active {
+            background: linear-gradient(#d8d0ff 0%, #b9a9ff 100%);
+        }
+
+        .key.black.active {
+            background: linear-gradient(#7d6dd6 0%, #5a47b0 100%);
+        }
+
+        .hint {
+            text-align: center;
+            font-size: 0.9em;
+            opacity: 0.75;
+            margin-top: 6px;
+        }
+
+        .status {
+            text-align: center;
+            font-size: 0.85em;
+            margin-top: 12px;
+            padding: 8px 14px;
+            border-radius: 8px;
+            background: rgba(255,255,255,0.06);
+            border: 1px solid rgba(255,255,255,0.12);
+        }
+
+        .status.ok { background: rgba(76,175,111,0.18); border-color: rgba(76,175,111,0.5); }
+        .status.warn { background: rgba(255,167,38,0.16); border-color: rgba(255,167,38,0.5); }
+        .status.loading { background: rgba(138,125,255,0.16); border-color: rgba(138,125,255,0.5); }
+
+        @media (prefers-reduced-motion: reduce) {
+            .band-btn, .play-song-btn { transition: none; }
+        }
+
         @media (max-width: 768px) {
             header h1 {
                 font-size: 1.8em;
@@ -262,6 +477,10 @@
             .audio-player {
                 max-width: 100%;
             }
+
+            .key.white { width: 44px; }
+            .key.black { width: 28px; margin-left: -14px; margin-right: -14px; }
+            .instrument { padding: 20px 14px; }
         }
     </style>
 </head>
@@ -425,6 +644,52 @@
                 </table>
             </div>
 
+            <!-- Interactive instrument -->
+            <div class="instrument">
+                <h2>🎹 Play the Molecule</h2>
+                <p class="lead">
+                    In FIMD, each frequency band is a self-contained slice of the molecule's motion. Here, each band
+                    becomes a playable <strong>instrument</strong> built from its own recorded energy-fluctuation audio:
+                    pick a band, and the page loads that WAV, finds its dominant pitch, and lets you transpose the real
+                    sound across the keys. The pitch you press sets the note; the band sets the voice. (If the page is
+                    opened directly from disk, browsers block loading the WAVs and a synthesized fallback is used &mdash;
+                    see the status line below.)
+                </p>
+
+                <div class="controls">
+                    <div class="control-group">
+                        <span class="control-title">Band &rarr; instrument voice</span>
+                        <div class="band-picker" id="bandPicker"></div>
+                    </div>
+                    <div class="control-group">
+                        <span class="control-title">Sample song</span>
+                        <button class="play-song-btn" id="songBtn">▶ Play "Twinkle Twinkle"</button>
+                    </div>
+                    <div class="control-group">
+                        <span class="control-title">Mix</span>
+                        <div class="slider-row">
+                            <label for="volSlider">Volume</label>
+                            <input type="range" id="volSlider" min="0" max="100" value="60">
+                        </div>
+                        <div class="slider-row">
+                            <label for="tempoSlider">Tempo</label>
+                            <input type="range" id="tempoSlider" min="60" max="180" value="112">
+                            <span id="tempoVal">112 BPM</span>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="piano-wrap">
+                    <div class="piano" id="piano"></div>
+                </div>
+                <p class="hint">
+                    Click the keys, or use your computer keyboard. Lower octave:
+                    <strong>A&nbsp;W&nbsp;S&nbsp;E&nbsp;D&nbsp;F&nbsp;T&nbsp;G&nbsp;Y&nbsp;H&nbsp;U&nbsp;J</strong>,
+                    continuing <strong>K&nbsp;O&nbsp;L&nbsp;P&nbsp;;</strong> up to E5.
+                </p>
+                <p class="status" id="audioStatus">Press a key or pick a band to load its recorded audio.</p>
+            </div>
+
             <!-- Methodology -->
             <div class="methodology">
                 <h2>How Are These Waveforms Generated?</h2>
@@ -468,6 +733,24 @@
                     </li>
                 </ol>
 
+                <h3>From Recorded Bands to a Playable Instrument</h3>
+                <p>
+                    The audio players above are the FIMD energy traces &mdash; recordings of ΔPE(t) for each band.
+                    The keyboard plays those same recordings: when you select a band, the page loads its WAV, measures
+                    the dominant pitch of the energy-fluctuation signal by autocorrelation, and then uses that as the
+                    instrument's base note. Pressing a key <strong>transposes the real recorded sound</strong> to the
+                    chosen pitch (playback rate = note frequency / detected base frequency), and "Twinkle Twinkle" is
+                    sequenced from the same band recording. The keys therefore come directly from the band's energy
+                    fluctuations rather than from a synthesized approximation.
+                </p>
+                <p>
+                    Because browsers block reading local files through the Web Audio API, the recordings load only when
+                    the page is served over <code>http://</code> (for example <code>python -m http.server</code> run in
+                    the folder). If the page is opened directly from disk, the keyboard falls back to a synthesized
+                    voice whose timbre is derived from the band's frequency window, and the status line under the
+                    keyboard says which mode is active.
+                </p>
+
                 <h3>Physical Interpretation</h3>
                 <p>
                     The audio waveforms directly represent <strong>energy flow</strong> within the molecular system. 
@@ -493,5 +776,437 @@
             <p>Force Field: AMBER ff14SB Force Field | Analysis: Python/NumPy/SciPy | Visualization: Custom HTML/CSS</p>
         </footer>
     </div>
+    <script>
+    (function () {
+        "use strict";
+
+        // ---- FIMD bands (cm^-1). Each band loads its recorded energy-fluctuation WAV. ----
+        var BANDS = [
+            { id: "300-600",   min: 300,  max: 600,  label: "300–600",   desc: "backbone bending",     wav: "FIMDSONO/audio_pe_300_600.wav" },
+            { id: "600-900",   min: 600,  max: 900,  label: "600–900",   desc: "out-of-plane bend",    wav: "FIMDSONO/audio_pe_600_900.wav" },
+            { id: "900-1200",  min: 900,  max: 1200, label: "900–1200",  desc: "C–C stretch / rock",   wav: "FIMDSONO/audio_pe_900_1200.wav" },
+            { id: "1200-1500", min: 1200, max: 1500, label: "1200–1500", desc: "C–N stretch / bend",   wav: "FIMDSONO/audio_pe_1200_1500.wav" },
+            { id: "1500-2000", min: 1500, max: 2000, label: "1500–2000", desc: "C=O stretch (amide I)", wav: "FIMDSONO/audio_pe_1500_2000.wav" },
+            { id: "2000-4000", min: 2000, max: 4000, label: "2000–4000", desc: "C–H / N–H stretch",     wav: "FIMDSONO/audio_pe_2000_4000.wav" }
+        ];
+        var CENTER_MIN = 450, CENTER_MAX = 3000;
+        var currentBand = BANDS[0];
+        var REF_NOTE_FREQ = 261.63; // C4: the recorded sample is mapped here, other keys transpose it
+
+        function clamp(x, a, b) { return Math.max(a, Math.min(b, x)); }
+        function lerp(a, b, t) { return a + (b - a) * t; }
+        function brightnessOf(band) {
+            var c = 0.5 * (band.min + band.max);
+            return clamp((c - CENTER_MIN) / (CENTER_MAX - CENTER_MIN), 0, 1);
+        }
+
+        var audioCtx = null;
+        var masterGain = null;
+
+        // Per-band loaded data
+        var sample = {};   // band.id -> { buffer, baseFreq }
+        var loadState = {}; // band.id -> 'loading' | 'ready' | 'failed'
+        var loadPromise = {};
+
+        function ensureAudio() {
+            if (!audioCtx) {
+                var AC = window.AudioContext || window.webkitAudioContext;
+                audioCtx = new AC();
+                masterGain = audioCtx.createGain();
+                masterGain.gain.value = parseFloat(volSlider.value) / 100 * 0.5;
+                masterGain.connect(audioCtx.destination);
+            }
+            if (audioCtx.state === "suspended") { audioCtx.resume(); }
+        }
+
+        // ---- Estimate the dominant pitch of the energy-fluctuation signal (autocorrelation) ----
+        function detectFundamental(buffer) {
+            var data = buffer.getChannelData(0);
+            var sr = buffer.sampleRate;
+            var size = Math.min(8192, data.length);
+            var start = Math.max(0, Math.floor((data.length - size) / 2));
+            var buf = data.subarray(start, start + size);
+
+            // RMS guard for near-silent signals
+            var rms = 0;
+            for (var i = 0; i < size; i++) rms += buf[i] * buf[i];
+            rms = Math.sqrt(rms / size);
+            if (rms < 1e-5) return REF_NOTE_FREQ;
+
+            var minLag = Math.max(2, Math.floor(sr / 4000)); // up to 4000 Hz
+            var maxLag = Math.floor(sr / 40);                // down to 40 Hz
+            if (maxLag >= size) maxLag = size - 1;
+            var best = 0, bestLag = -1;
+            for (var lag = minLag; lag <= maxLag; lag++) {
+                var sum = 0;
+                for (var j = 0; j < size - lag; j++) sum += buf[j] * buf[j + lag];
+                if (sum > best) { best = sum; bestLag = lag; }
+            }
+            if (bestLag <= 0) return REF_NOTE_FREQ;
+            var f = sr / bestLag;
+            return (f > 20 && f < 8000) ? f : REF_NOTE_FREQ;
+        }
+
+        // ---- Load + decode a band's WAV, then estimate its base pitch ----
+        function loadBand(band) {
+            if (loadState[band.id] === "ready") return Promise.resolve(true);
+            if (loadPromise[band.id]) return loadPromise[band.id];
+            ensureAudio();
+            loadState[band.id] = "loading";
+            updateStatus();
+            loadPromise[band.id] = fetch(band.wav)
+                .then(function (r) {
+                    if (!r.ok) throw new Error("HTTP " + r.status);
+                    return r.arrayBuffer();
+                })
+                .then(function (ab) {
+                    return audioCtx.decodeAudioData(ab);
+                })
+                .then(function (buffer) {
+                    sample[band.id] = { buffer: buffer, baseFreq: detectFundamental(buffer) };
+                    loadState[band.id] = "ready";
+                    updateStatus();
+                    return true;
+                })
+                .catch(function () {
+                    loadState[band.id] = "failed";
+                    updateStatus();
+                    return false;
+                });
+            return loadPromise[band.id];
+        }
+
+        // ======================================================================
+        // SAMPLE ENGINE — plays the actual recorded energy-fluctuation audio,
+        // transposed across the keyboard by playback rate.
+        // ======================================================================
+        function startSampleVoice(noteFreq, band) {
+            var s = sample[band.id];
+            var src = audioCtx.createBufferSource();
+            src.buffer = s.buffer;
+            src.loop = true;
+            src.playbackRate.value = noteFreq / s.baseFreq;
+            var amp = audioCtx.createGain();
+            amp.gain.value = 0;
+            src.connect(amp); amp.connect(masterGain);
+            var now = audioCtx.currentTime;
+            amp.gain.setValueAtTime(0.0001, now);
+            amp.gain.linearRampToValueAtTime(0.9, now + 0.012);
+            src.start(now);
+            return { kind: "sample", src: src, amp: amp };
+        }
+
+        function scheduleSampleNote(noteFreq, band, when, dur) {
+            var s = sample[band.id];
+            var src = audioCtx.createBufferSource();
+            src.buffer = s.buffer;
+            src.loop = true;
+            src.playbackRate.value = noteFreq / s.baseFreq;
+            var amp = audioCtx.createGain();
+            amp.gain.value = 0;
+            src.connect(amp); amp.connect(masterGain);
+            var hold = Math.max(0.05, dur * 0.82);
+            amp.gain.setValueAtTime(0.0001, when);
+            amp.gain.linearRampToValueAtTime(0.9, when + 0.012);
+            amp.gain.setValueAtTime(0.9, when + hold);
+            amp.gain.linearRampToValueAtTime(0.0001, when + dur);
+            src.start(when);
+            src.stop(when + dur + 0.03);
+        }
+
+        // ======================================================================
+        // SYNTH FALLBACK — used only if the WAV files cannot be loaded.
+        // Timbre derived from the band's frequency window.
+        // ======================================================================
+        var waveCache = {};
+        function waveForBand(band) {
+            if (waveCache[band.id]) return waveCache[band.id];
+            var t = brightnessOf(band), N = 22;
+            var real = new Float32Array(N), imag = new Float32Array(N);
+            var decay = lerp(1.15, 0.18, t), oddBoost = 1 + 0.45 * t;
+            for (var n = 1; n < N; n++) {
+                var amp = Math.exp(-decay * (n - 1));
+                if (n % 2 === 1) amp *= oddBoost;
+                real[n] = amp;
+            }
+            var w = audioCtx.createPeriodicWave(real, imag, { disableNormalization: false });
+            waveCache[band.id] = w;
+            return w;
+        }
+        function synthParams(band) {
+            var t = brightnessOf(band);
+            return { attack: lerp(0.045, 0.006, t), release: lerp(0.45, 0.12, t),
+                     tremRate: lerp(4, 9, t), tremDepth: lerp(0.06, 0.16, t) };
+        }
+        function buildSynth(freq, band) {
+            var p = synthParams(band);
+            var osc = audioCtx.createOscillator();
+            osc.setPeriodicWave(waveForBand(band));
+            osc.frequency.value = freq;
+            var amp = audioCtx.createGain(); amp.gain.value = 0;
+            var trem = audioCtx.createGain(); trem.gain.value = 1;
+            var lfo = audioCtx.createOscillator(); lfo.frequency.value = p.tremRate;
+            var lfoGain = audioCtx.createGain(); lfoGain.gain.value = p.tremDepth;
+            lfo.connect(lfoGain); lfoGain.connect(trem.gain);
+            osc.connect(amp); amp.connect(trem); trem.connect(masterGain);
+            return { osc: osc, amp: amp, lfo: lfo, params: p };
+        }
+        function startSynthVoice(freq, band) {
+            var v = buildSynth(freq, band);
+            var now = audioCtx.currentTime;
+            v.amp.gain.setValueAtTime(0.0001, now);
+            v.amp.gain.linearRampToValueAtTime(0.9, now + v.params.attack);
+            v.osc.start(now); v.lfo.start(now);
+            v.kind = "synth";
+            return v;
+        }
+        function scheduleSynthNote(freq, band, when, dur) {
+            var v = buildSynth(freq, band);
+            var hold = Math.max(0.05, dur * 0.82);
+            v.amp.gain.setValueAtTime(0.0001, when);
+            v.amp.gain.linearRampToValueAtTime(0.9, when + v.params.attack);
+            v.amp.gain.setValueAtTime(0.9, when + hold);
+            v.amp.gain.linearRampToValueAtTime(0.0001, when + dur);
+            v.osc.start(when); v.lfo.start(when);
+            v.osc.stop(when + dur + 0.03); v.lfo.stop(when + dur + 0.03);
+        }
+
+        // ======================================================================
+        // DISPATCHERS — prefer recorded sample, fall back to synth.
+        // ======================================================================
+        function startVoice(freq, band) {
+            ensureAudio();
+            if (loadState[band.id] === "ready") return startSampleVoice(freq, band);
+            return startSynthVoice(freq, band);
+        }
+        function stopVoice(v) {
+            if (!v) return;
+            var now = audioCtx.currentTime;
+            if (v.kind === "sample") {
+                v.amp.gain.cancelScheduledValues(now);
+                v.amp.gain.setValueAtTime(v.amp.gain.value, now);
+                v.amp.gain.linearRampToValueAtTime(0.0001, now + 0.12);
+                v.src.stop(now + 0.14);
+            } else {
+                var rel = v.params.release;
+                v.amp.gain.cancelScheduledValues(now);
+                v.amp.gain.setValueAtTime(v.amp.gain.value, now);
+                v.amp.gain.linearRampToValueAtTime(0.0001, now + rel);
+                v.osc.stop(now + rel + 0.02); v.lfo.stop(now + rel + 0.02);
+            }
+        }
+        function scheduleNote(freq, band, when, dur) {
+            if (loadState[band.id] === "ready") scheduleSampleNote(freq, band, when, dur);
+            else scheduleSynthNote(freq, band, when, dur);
+        }
+
+        // ---- Note table (equal temperament, A4 = 440) ----
+        function noteFreq(semisFromA4) { return 440 * Math.pow(2, semisFromA4 / 12); }
+        // semitone offsets from A4
+        var NOTES = [
+            { name: "C4",  type: "white", key: "a",  s: -9 },
+            { name: "C#4", type: "black", key: "w",  s: -8 },
+            { name: "D4",  type: "white", key: "s",  s: -7 },
+            { name: "D#4", type: "black", key: "e",  s: -6 },
+            { name: "E4",  type: "white", key: "d",  s: -5 },
+            { name: "F4",  type: "white", key: "f",  s: -4 },
+            { name: "F#4", type: "black", key: "t",  s: -3 },
+            { name: "G4",  type: "white", key: "g",  s: -2 },
+            { name: "G#4", type: "black", key: "y",  s: -1 },
+            { name: "A4",  type: "white", key: "h",  s: 0  },
+            { name: "A#4", type: "black", key: "u",  s: 1  },
+            { name: "B4",  type: "white", key: "j",  s: 2  },
+            { name: "C5",  type: "white", key: "k",  s: 3  },
+            { name: "C#5", type: "black", key: "o",  s: 4  },
+            { name: "D5",  type: "white", key: "l",  s: 5  },
+            { name: "D#5", type: "black", key: "p",  s: 6  },
+            { name: "E5",  type: "white", key: ";",  s: 7  }
+        ];
+        NOTES.forEach(function (n) { n.freq = noteFreq(n.s); });
+        var noteByName = {};
+        var noteByKey = {};
+        NOTES.forEach(function (n) { noteByName[n.name] = n; noteByKey[n.key] = n; });
+
+        // ---- DOM references ----
+        var volSlider = document.getElementById("volSlider");
+        var tempoSlider = document.getElementById("tempoSlider");
+        var tempoVal = document.getElementById("tempoVal");
+        var bandPicker = document.getElementById("bandPicker");
+        var pianoEl = document.getElementById("piano");
+        var songBtn = document.getElementById("songBtn");
+        var audioStatus = document.getElementById("audioStatus");
+
+        function updateStatus() {
+            var st = loadState[currentBand.id];
+            var b = currentBand.label + " cm⁻¹";
+            if (st === "ready") {
+                var f = sample[currentBand.id].baseFreq;
+                audioStatus.className = "status ok";
+                audioStatus.innerHTML = "▶ Playing the recorded energy-fluctuation audio for " + b +
+                    " (detected base pitch ≈ " + f.toFixed(1) + " Hz; keys transpose this real sound).";
+            } else if (st === "loading") {
+                audioStatus.className = "status loading";
+                audioStatus.textContent = "Loading recorded audio for " + b + "…";
+            } else if (st === "failed") {
+                audioStatus.className = "status warn";
+                audioStatus.innerHTML = "Couldn't load the WAV files (browsers block this when the page is opened " +
+                    "directly as a file). Using a synthesized fallback voice. To hear the real recordings, serve the " +
+                    "folder over http — e.g. run <code>python -m http.server</code> in the folder and open " +
+                    "<code>http://localhost:8000/FIMD_sonification.html</code>.";
+            } else {
+                audioStatus.className = "status";
+                audioStatus.textContent = "Press a key or pick a band to load its recorded audio.";
+            }
+        }
+
+        // ---- Band picker UI ----
+        BANDS.forEach(function (band, i) {
+            var btn = document.createElement("button");
+            btn.className = "band-btn" + (i === 0 ? " active" : "");
+            btn.innerHTML = band.label + " cm⁻¹<small>" + band.desc + "</small>";
+            btn.addEventListener("click", function () {
+                currentBand = band;
+                Array.prototype.forEach.call(bandPicker.children, function (c) {
+                    c.classList.remove("active");
+                });
+                btn.classList.add("active");
+                loadBand(band).then(updateStatus);
+                updateStatus();
+            });
+            bandPicker.appendChild(btn);
+        });
+
+        // ---- Piano UI ----
+        var keyEls = {};
+        NOTES.forEach(function (n) {
+            var el = document.createElement("div");
+            el.className = "key " + n.type;
+            el.dataset.note = n.name;
+            el.innerHTML =
+                '<span class="keycap">' + n.key.toUpperCase() + '</span>' +
+                '<span class="notename">' + n.name + '</span>';
+            pianoEl.appendChild(el);
+            keyEls[n.name] = el;
+        });
+
+        // ---- Interaction: pointer + keyboard ----
+        var activeVoices = {}; // note name -> voice
+
+        function pressNote(name) {
+            if (activeVoices[name]) return;
+            var n = noteByName[name];
+            if (!n) return;
+            ensureAudio();
+            if (!loadState[currentBand.id]) { loadBand(currentBand).then(updateStatus); }
+            activeVoices[name] = startVoice(n.freq, currentBand);
+            if (keyEls[name]) keyEls[name].classList.add("active");
+        }
+
+        function releaseNote(name) {
+            if (!activeVoices[name]) return;
+            stopVoice(activeVoices[name]);
+            delete activeVoices[name];
+            if (keyEls[name]) keyEls[name].classList.remove("active");
+        }
+
+        NOTES.forEach(function (n) {
+            var el = keyEls[n.name];
+            el.addEventListener("pointerdown", function (ev) {
+                ev.preventDefault();
+                pressNote(n.name);
+            });
+            el.addEventListener("pointerup", function () { releaseNote(n.name); });
+            el.addEventListener("pointerleave", function () { releaseNote(n.name); });
+            el.addEventListener("pointercancel", function () { releaseNote(n.name); });
+        });
+
+        document.addEventListener("keydown", function (ev) {
+            if (ev.repeat) return;
+            var k = ev.key.toLowerCase();
+            if (noteByKey[k]) {
+                ev.preventDefault();
+                pressNote(noteByKey[k].name);
+            }
+        });
+        document.addEventListener("keyup", function (ev) {
+            var k = ev.key.toLowerCase();
+            if (noteByKey[k]) {
+                ev.preventDefault();
+                releaseNote(noteByKey[k].name);
+            }
+        });
+
+        // ---- Controls ----
+        volSlider.addEventListener("input", function () {
+            if (masterGain) masterGain.gain.value = parseFloat(volSlider.value) / 100 * 0.5;
+        });
+        tempoSlider.addEventListener("input", function () {
+            tempoVal.textContent = tempoSlider.value + " BPM";
+        });
+
+        // ---- Twinkle Twinkle Little Star (C major), [noteName, beats] ----
+        var TWINKLE = [
+            ["C4",1],["C4",1],["G4",1],["G4",1],["A4",1],["A4",1],["G4",2],
+            ["F4",1],["F4",1],["E4",1],["E4",1],["D4",1],["D4",1],["C4",2],
+            ["G4",1],["G4",1],["F4",1],["F4",1],["E4",1],["E4",1],["D4",2],
+            ["G4",1],["G4",1],["F4",1],["F4",1],["E4",1],["E4",1],["D4",2],
+            ["C4",1],["C4",1],["G4",1],["G4",1],["A4",1],["A4",1],["G4",2],
+            ["F4",1],["F4",1],["E4",1],["E4",1],["D4",1],["D4",1],["C4",2]
+        ];
+
+        var songTimers = [];
+        function clearSongTimers() {
+            songTimers.forEach(clearTimeout);
+            songTimers = [];
+        }
+
+        songBtn.addEventListener("click", function () {
+            ensureAudio();
+            songBtn.disabled = true;
+            songBtn.textContent = "♪ Loading…";
+            // make sure the current band's recorded audio is loaded before performing
+            loadBand(currentBand).then(function () {
+                updateStatus();
+                performSong();
+            });
+        });
+
+        function performSong() {
+            clearSongTimers();
+            songBtn.textContent = "♪ Playing…";
+
+            var bpm = parseFloat(tempoSlider.value);
+            var beat = 60 / bpm;        // seconds per beat
+            var gap = 0.04;             // small detached gap between notes
+            var startAt = audioCtx.currentTime + 0.08;
+            var cursor = startAt;
+            var band = currentBand;     // lock the band for this performance
+
+            TWINKLE.forEach(function (item) {
+                var n = noteByName[item[0]];
+                var dur = item[1] * beat;
+                scheduleNote(n.freq, band, cursor, Math.max(0.08, dur - gap));
+
+                // visual key flash, scheduled in wall-clock time
+                (function (name, delayMs, holdMs) {
+                    songTimers.push(setTimeout(function () {
+                        if (keyEls[name]) keyEls[name].classList.add("active");
+                        songTimers.push(setTimeout(function () {
+                            if (keyEls[name]) keyEls[name].classList.remove("active");
+                        }, holdMs));
+                    }, delayMs));
+                })(item[0], (cursor - audioCtx.currentTime) * 1000, Math.max(60, (dur - gap) * 1000));
+
+                cursor += dur;
+            });
+
+            var totalMs = (cursor - audioCtx.currentTime) * 1000 + 150;
+            songTimers.push(setTimeout(function () {
+                songBtn.disabled = false;
+                songBtn.textContent = '▶ Play "Twinkle Twinkle"';
+            }, totalMs));
+        }
+    })();
+    </script>
 </body>
 </html>

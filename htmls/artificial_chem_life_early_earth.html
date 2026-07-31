@@ -3,886 +3,1119 @@
 <head>
 <meta charset="UTF-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>FIMD Artificial Chemistry – Darwinian Selection in Frequency Space</title>
+<title>CHNO reactive-collision chemistry — 3D periodic box</title>
 <style>
-  * { margin: 0; padding: 0; box-sizing: border-box; }
-  body { background: #080b12; color: #c8d6e5; font-family: 'JetBrains Mono', 'Fira Code', 'SF Mono', 'Courier New', monospace; overflow-x: hidden; }
-  canvas { display: block; }
-  button { font-family: inherit; cursor: pointer; border: none; border-radius: 4px; padding: 5px 12px; font-size: 11px; font-weight: 600; color: #fff; letter-spacing: 0.3px; }
-  button:hover { filter: brightness(1.15); }
-  .panel { border: 1px solid rgba(100,180,255,0.08); border-radius: 6px; background: #0c1019; }
-  .ctrl-row { display:flex; align-items:center; gap:6px; margin-bottom:6px; }
-  .ctrl-row label { font-size:10px; color:#718096; min-width:120px; }
-  .ctrl-row input[type=range] { background:#1a202c; border:1px solid #2d3748; border-radius:3px; color:#a0aec0; font-family:inherit; font-size:10px; padding:2px 4px; width:100px; }
-  .ctrl-row .val { font-size:10px; color:#a0aec0; min-width:40px; }
-  .tab-btn { padding:4px 10px; font-size:10px; border-radius:3px 3px 0 0; background:#1a202c; color:#718096; border:1px solid #2d3748; border-bottom:none; cursor:pointer; }
-  .tab-btn.active { background:#0c1019; color:#e2e8f0; border-color:rgba(100,180,255,0.15); }
-  .savebtn { position:absolute; top:4px; right:4px; z-index:2; padding:1px 6px; font-size:11px; background:rgba(45,55,72,0.85); color:#a0aec0; border:1px solid #2d3748; border-radius:3px; line-height:1.4; }
-  .savebtn:hover { background:#4263eb; color:#fff; }
-  .bigsave { background:#2d3748; color:#a0aec0; font-size:10px; border:1px solid #4a5568; }
-  .bigsave:hover { background:#4263eb; color:#fff; filter:none; }
+  :root{
+    --bg:#0c1116;--panel:#141b23;--panel2:#1a2430;--line:#26313d;
+    --ink:#c9d6e2;--mut:#6e8091;--mut2:#586675;
+    --cool:#4bb6c8;--cool-dim:#2b6873;--warm:#e0a24b;--warm-dim:#7a5a29;--ok:#69c08a;--bad:#d76b6b;
+    --C:#5a626d;--H:#eef2f7;--N:#5b8dd6;--O:#e0685400;--accent:var(--cool);--accent-dim:var(--cool-dim);
+  }
+  *{box-sizing:border-box}html,body{margin:0;height:100%}
+  body{background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;font-size:13px;line-height:1.45;display:flex;flex-direction:column;min-height:100%}
+  body.hot{--accent:var(--warm);--accent-dim:var(--warm-dim)}
+  .mono{font-family:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+  header{padding:12px 18px;border-bottom:1px solid var(--line);display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;background:linear-gradient(180deg,var(--panel),transparent)}
+  header h1{font-size:15px;margin:0;font-weight:600}
+  header .tag{font-size:10.5px;text-transform:uppercase;letter-spacing:1.4px;color:var(--accent);border:1px solid var(--accent-dim);padding:2px 8px;border-radius:2px;transition:.4s}
+  header .sub{color:var(--mut2);font-size:12px}
+  main{display:grid;grid-template-columns:262px 1fr 292px;flex:1;min-height:0;overflow:hidden}
+  @media(max-width:1000px){main{grid-template-columns:1fr}}
+  aside{border-right:1px solid var(--line);padding:14px;overflow-y:auto;background:var(--panel)}
+  aside.right{border-right:none;border-left:1px solid var(--line)}
+  .group{margin-bottom:15px}
+  .group h2{font-size:10.5px;text-transform:uppercase;letter-spacing:1.3px;color:var(--mut2);margin:0 0 9px;font-weight:600;border-bottom:1px solid var(--line);padding-bottom:5px}
+  .ctrl{display:flex;flex-direction:column;gap:3px;margin-bottom:9px}
+  .ctrl .row{display:flex;justify-content:space-between;align-items:baseline}
+  .ctrl label{color:var(--mut2)}.ctrl .val{color:var(--accent);font-size:12px;transition:.4s}
+  input[type=range]{width:100%;accent-color:var(--accent);height:3px}
+  input[type=text]{width:100%;background:var(--panel2);border:1px solid var(--line);color:var(--ink);border-radius:3px;padding:5px 7px;font-family:ui-monospace,monospace;font-size:12px}
+  input[type=text]:focus{outline:none;border-color:var(--accent)}
+  .chips{display:flex;flex-wrap:wrap;gap:5px;margin-bottom:9px}
+  .chip{background:var(--panel2);border:1px solid var(--line);border-radius:12px;padding:3px 10px;font-size:11px;font-family:ui-monospace,monospace;cursor:pointer;user-select:none;color:var(--mut2);transition:.12s}
+  .chip:hover{border-color:var(--accent-dim)}
+  .chip.on{background:var(--cool-dim);border-color:var(--cool);color:var(--ink)}
+  .chip sub{font-size:8px}
+  .btns{display:flex;gap:7px;flex-wrap:wrap}
+  button{background:var(--panel2);color:var(--ink);border:1px solid var(--line);padding:7px 11px;border-radius:3px;cursor:pointer;font-size:12px;font-family:inherit;transition:border-color .15s}
+  button:hover{border-color:var(--accent-dim)}button.primary{background:var(--accent-dim);border-color:var(--accent)}
+  button:active{transform:translateY(1px)}
+  .switch{display:flex;align-items:center;gap:9px;cursor:pointer;user-select:none;margin-bottom:8px}
+  .switch .track{width:38px;height:20px;border-radius:20px;background:var(--panel2);border:1px solid var(--line);position:relative;transition:.3s}
+  .switch .knob{position:absolute;top:1px;left:1px;width:16px;height:16px;border-radius:50%;background:var(--mut2);transition:.3s}
+  .switch.on .track{background:var(--cool-dim);border-color:var(--cool)}.switch.on .knob{transform:translateX(18px);background:var(--cool)}
+  .stage{display:flex;flex-direction:column;min-height:0;overflow:hidden;position:relative}
+  #box{flex:1;display:block;width:100%;min-height:0;cursor:grab}#box:active{cursor:grabbing}
+  .ledger{display:grid;grid-template-columns:repeat(auto-fit,minmax(88px,1fr));gap:1px;background:var(--line);border-top:1px solid var(--line)}
+  .cell{background:var(--panel);padding:7px 10px}
+  .cell .k{color:var(--mut2);font-size:9.5px;text-transform:uppercase;letter-spacing:.6px}
+  .cell .v{font-size:14px;margin-top:1px}.cell .u{color:var(--mut2);font-size:9.5px;margin-left:2px}
+  .species{display:flex;flex-direction:column;gap:5px}
+  .sp{display:flex;align-items:center;gap:8px;background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:5px 8px}
+  .sp canvas{width:40px;height:40px;flex:none}
+  .sp .f{font-size:12px}.sp .n{color:var(--mut2);font-size:10px}
+  .sp .bar{height:4px;background:var(--line);border-radius:2px;overflow:hidden;margin-top:3px}
+  .sp .bar i{display:block;height:100%;background:var(--accent)}
+  canvas.series{width:100%;height:110px;display:block;margin-top:8px}
+  #selftest{background:var(--panel2);border:1px solid var(--line);border-radius:4px;padding:10px 12px;white-space:pre-wrap;font-size:11px;margin-top:8px}
+  #selftest .pass{color:var(--ok)}#selftest .fail{color:var(--bad)}#selftest .dim{color:var(--mut2)}
+  .note{color:var(--mut2);font-size:11px;line-height:1.5}
+  footer.plots{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line);border-top:1px solid var(--line);height:190px;flex:none}
+  .pcard{background:var(--panel);padding:7px 10px 4px;display:flex;flex-direction:column;min-width:0;min-height:0}
+  .pcard h3{margin:0 0 3px;font-size:9.5px;text-transform:uppercase;letter-spacing:.7px;color:var(--mut2);font-weight:600}
+  .pcard canvas{flex:1;width:100%;min-height:0}
+  @media(max-width:1000px){footer.plots{grid-template-columns:1fr 1fr;height:auto}.pcard canvas{height:150px}}
 </style>
 </head>
 <body>
-<div id="app" style="max-width:1280px;margin:0 auto;padding:12px;"></div>
+<header>
+  <h1>CHNO Reactive-Collision Chemistry · 3D</h1>
+  <span class="tag" id="tag">periodic cube</span>
+  <span class="sub">real 3D molecular geometry · Maxwell–Boltzmann · collisions · energy &amp; momentum conserved</span>
+</header>
+<main>
+  <aside>
+    <div class="group"><h2>Run</h2><div class="btns"><button id="runBtn" class="primary">Run</button><button id="stepBtn">Step</button><button id="resetBtn">Reset</button></div></div>
+    <div class="group">
+      <h2>Initial state</h2>
+      <div class="ctrl"><div class="row"><label>Composition</label><span class="val mono" id="initV">reducing</span></div><input type="range" id="init" min="0" max="1" step="1" value="1" /></div>
+      <div class="ctrl"><div class="row"><label>Number of molecules</label><span class="val mono" id="nV">900</span></div><input type="range" id="n" min="200" max="3000" step="100" value="900" /></div>
+      <div class="note">Reducing = H₂/H₂O/NH₃/CH₄/CO/N₂/CO₂. Atomized = free atoms + H₂ (more radicals). Applied on Reset.</div>
+    </div>
+    <div class="group">
+      <h2>Thermodynamics</h2>
+      <div class="switch on" id="thermoSwitch"><div class="track"><div class="knob"></div></div><span>Thermostat <span class="mono val" id="thermoState">ON</span></span></div>
+      <div class="ctrl"><div class="row"><label>Temperature T</label><span class="val mono" id="TV">900 K</span></div><input type="range" id="T" min="280" max="3000" step="20" value="900" /></div>
+      <div class="switch" id="autoSwitch"><div class="track"><div class="knob"></div></div><span>Auto-cycle · prebiotic Earth <span class="mono val" id="autoState">OFF</span></span></div>
+      <div class="ctrl"><div class="row"><label>Cool phase T</label><span class="val mono" id="tLowV">450 K</span></div><input type="range" id="tLow" min="280" max="1600" step="20" value="450" /></div>
+      <div class="ctrl"><div class="row"><label>Warm phase T</label><span class="val mono" id="tHighV">1000 K</span></div><input type="range" id="tHigh" min="400" max="2200" step="20" value="1000" /></div>
+      <div class="ctrl"><div class="row"><label>Cycle period</label><span class="val mono" id="tPerV">800</span></div><input type="range" id="tPer" min="100" max="4000" step="100" value="800" /></div>
+      <div class="note">Auto-cycle sweeps temperature between a cool assembly phase and a warm dissociation phase, emulating prebiotic thermal cycling — day/night, wet/dry hot springs, hydrothermal circulation. The repeated build-up and break-down is a non-equilibrium engine for complexity. (Uses the thermostat; the constant-T slider above is overridden while cycling.)</div>
+      <div class="ctrl"><div class="row"><label>Radical penalty ε</label><span class="val mono" id="eopenV">160 kJ/mol</span></div><input type="range" id="eopen" min="0" max="280" step="10" value="160" /></div>
+      <div class="ctrl"><div class="row"><label>Intrinsic barrier β</label><span class="val mono" id="betaV">12 kJ/mol</span></div><input type="range" id="beta" min="5" max="120" step="1" value="12" /></div>
+      <div class="ctrl"><div class="row"><label>Reaction entropy scale C₀</label><span class="val mono" id="dSactV">C₀ = 8 J/mol·K</span></div><input type="range" id="dSact" min="-120" max="0" step="1" value="-8" /></div>
+      <div class="note">Each reaction's own entropy change ΔS° (translational + molecularity) enters acceptance as exp(min(0,ΔS°)/R), applied to both directions so detailed balance holds on ΔG=ΔH−TΔS, not just ΔH. C₀ sets how much translational entropy a molecule carries — larger C₀ penalises association (merging two particles into one) and pushes the ensemble toward smaller, more numerous molecules. This is the entropic force acting in the dynamics, not just in the plot.</div>
+      <div class="ctrl"><div class="row"><label>Packing fraction</label><span class="val mono" id="denV">0.18</span></div><input type="range" id="den" min="0.06" max="0.34" step="0.01" value="0.18" /></div>
+      <div class="ctrl"><div class="row"><label>View slice (depth)</label><span class="val mono" id="viewSlabV">40%</span></div><input type="range" id="viewSlab" min="0.15" max="1" step="0.05" value="0.4" /></div>
+      <div class="note">The box is 3D but drawn flat, so every depth layer overlaps at once. This shows only a central slice facing the camera (the full box outline stays for reference) — set to 100% to see everything. Physics always uses the whole box.</div>
+      <div class="note">Thermostat off = adiabatic (energy conserved — use the self-test). Lower T favours assembly, higher T dissociation. Drag the view to rotate.</div>
+    </div>
+    <div class="group">
+      <h2>Medium · solvent</h2>
+      <div class="switch on" id="solventSwitch"><div class="track"><div class="knob"></div></div><span>Aqueous solution <span class="mono val" id="solventState">ON</span></span></div>
+      <div class="ctrl"><div class="row"><label>Solvent friction γ</label><span class="val mono" id="gammaV">0.50</span></div><input type="range" id="gamma" min="0.05" max="2" step="0.05" value="0.5" /></div>
+      <div class="ctrl"><div class="row"><label>Hydrophobicity</label><span class="val mono" id="ksolvV">10 kJ/mol</span></div><input type="range" id="ksolv" min="0" max="30" step="1" value="10" /></div>
+      <div class="note">Solution mode replaces ballistic gas flight with <b>Langevin dynamics</b> (solvent drag + thermal noise → molecules diffuse and are caged, as in water). <b>Hydrophobicity</b> adds a solvation free energy: burying nonpolar (C) surface on bonding is favourable (the hydrophobic effect) while burying polar (N,O) sites is penalised (they prefer to stay solvated). This enters reaction acceptance in both directions, so detailed balance holds on ΔG including solvation. Off = ideal gas.</div>
+    </div>
+    <div class="group">
+      <h2>Feedstock bath · prebiotic composition</h2>
+      <div class="chips" id="bathScenarios"></div>
+      <div class="chips" id="bathChips"></div>
+      <div class="ctrl"><div class="row"><label>Bath density (H₂O reference)</label><span class="val mono" id="bathAmtV">120</span></div><input type="range" id="bathAmt" min="20" max="500" step="10" value="120" /></div>
+      <div class="note">Pick a prebiotic scenario to set realistic relative concentrations (H₂O dominant, CO₂/N₂ major, CO/H₂ minor, CH₄/NH₃ trace, O₂≈0 — Earth was anoxic before the Great Oxidation Event). Chips show each species' clamped count; toggle any on/off. The slider scales overall density. Selected species are held at their concentration (open-system chemostat) and excluded from the product statistics and plots.</div>
+    </div>
+    <div class="group">
+      <h2>Persistence mechanisms</h2>
+      <div class="switch" id="wetdrySwitch"><div class="track"><div class="knob"></div></div><span>Wet–dry cycling <span class="mono val" id="wetdryState">OFF</span></span></div>
+      <div class="ctrl"><div class="row"><label>Wet–dry period</label><span class="val mono" id="dryPerV">1200</span></div><input type="range" id="dryPer" min="200" max="5000" step="100" value="1200" /></div>
+      <div class="switch" id="mineralSwitch"><div class="track"><div class="knob"></div></div><span>Mineral surface <span class="mono val" id="mineralState">OFF</span></span></div>
+      <div class="ctrl"><div class="row"><label>Surface strength</label><span class="val mono" id="minCatV">0.50</span></div><input type="range" id="minCat" min="0" max="1" step="0.05" value="0.5" /></div>
+      <div class="ctrl"><div class="row"><label>Bond stabilization</label><span class="val mono" id="condStabV">45 kJ</span></div><input type="range" id="condStab" min="0" max="90" step="5" value="45" /></div>
+      <div class="ctrl"><div class="row"><label>Outflow / dilution</label><span class="val mono" id="dilV">0.000</span></div><input type="range" id="dil" min="0" max="0.08" step="0.002" value="0" /></div>
+      <div class="switch" id="dischargeSwitch"><div class="track"><div class="knob"></div></div><span>Spark discharge <span class="mono val" id="dischargeState">OFF</span></span></div>
+      <div class="ctrl"><div class="row"><label>Strike rate</label><span class="val mono" id="dischRateV">0.03</span></div><input type="range" id="dischRate" min="0" max="0.15" step="0.005" value="0.03" /></div>
+      <div class="switch" id="fuelSwitch"><div class="track"><div class="knob"></div></div><span>Chemical fuel <span class="mono val" id="fuelState">OFF</span></span></div>
+      <div class="ctrl"><div class="row"><label>Fuel level (cyanamide)</label><span class="val mono" id="fuelTgtV">60</span></div><input type="range" id="fuelTgt" min="0" max="400" step="10" value="60" /></div>
+      <div class="ctrl"><div class="row"><label>Waste washout (urea)</label><span class="val mono" id="wasteOutV">0.05</span></div><input type="range" id="wasteOut" min="0" max="0.3" step="0.01" value="0.05" /></div>
+      <div class="note">Physical routes to persistence (from origin-of-life research). <b>Wet–dry cycling</b> (Damer–Deamer): the pool periodically dries — evaporating water suppresses hydrolysis and drives condensation, so bonds form and are kinetically trapped (Ross &amp; Deamer 2016). <b>Mineral surface</b> (Ferris; Wächtershäuser): lowers barriers <i>and</i> — via <b>bond stabilization</b> — provides an adsorption free energy that stabilises condensed (amide/ester) bonds, so condensation is favoured and hydrolysis of a surface-bound bond is suppressed. This is what lets fragile molecules like <b>amino acids persist</b> instead of hydrolysing back the moment water returns (added as a free-energy factor, so energy is conserved and detailed balance holds). <b>Outflow</b> (chemostat/CSTR): washes out products so only species re-made fast enough survive. <b>Spark discharge</b> (Miller–Urey): rare lightning cracks N≡N to fix nitrogen. <b>Chemical fuel</b> (the thermodynamic drive): condensation in water is uphill, so an undriven box relaxes to a small-molecule equilibrium no matter how you tune it. Cyanamide (N≡C–NH₂), a real prebiotic condensing agent, activates an –OH into a leaving group; condensing it expels the very stable <b>urea</b>, and urea's stability pays for the new bond. Holding fuel above equilibrium and washing the waste out (a chemostat) parks the network at a driven <b>non-equilibrium steady state</b>. Every step has its explicit reverse (act/deact, acond/ahyd), so detailed balance of the elementary steps is untouched — the drive comes only from the fuel/waste reservoirs. Cut the fuel and complexity decays back: that collapse is the honest signature of a driven system, not a bug. <i>To grow &amp; keep amino acids: Reducing bath + <b>Chemical fuel</b> + Mineral surface + Wet–dry, T≈600–900 K, and a little Outflow so products don't just pile up.</i></div>
+    </div>
+    <div class="group">
+      <h2>Telescopic epochs · promote to background</h2>
+      <div class="switch" id="epochSwitch"><div class="track"><div class="knob"></div></div><span>Auto (on plateau) <span class="mono val" id="epochState">OFF</span></span></div>
+      <div class="ctrl"><div class="row"><label>Promote top-K species</label><span class="val mono" id="epochKeepV">6</span></div><input type="range" id="epochKeep" min="1" max="20" step="1" value="6" /></div>
+      <div class="ctrl"><div class="row"><label>Plateau sensitivity</label><span class="val mono" id="epochPlatV">0.03</span></div><input type="range" id="epochPlat" min="0.005" max="0.1" step="0.005" value="0.03" /></div>
+      <div class="btns"><button id="epochNowBtn">Promote now</button><button id="epochClearBtn">Clear background</button></div>
+      <div class="note">A telescopic renormalisation. When the foreground mean size <b>plateaus</b> (settles into stable larger molecules), the <b>K most abundant</b> species are promoted into the maintained background — held at concentration like feedstock and dropped from the foreground plots — so the next level of complexity assembles on top of them. Lower sensitivity waits for a flatter plateau. Epochs: <span class="mono val" id="epochCountV">0</span> · in background: <span class="mono val" id="promCountV">0</span>.</div>
+    </div>
+    <div class="group"><h2>Diagnostics</h2><div class="btns"><button id="testBtn">Conservation self-test</button><button id="csvBtn">Export CSV</button></div>
+      <div id="selftest" class="mono dim">Set the thermostat OFF and run the self-test: total energy, total momentum (all 3 axes), and every atom must be conserved over 3000 collisionful steps.</div></div>
+    <div class="group">
+      <h2>Record to disk</h2>
+      <div class="switch" id="recSwitch"><div class="track"><div class="knob"></div></div><span>Record <span class="mono val" id="recState">OFF</span></span></div>
+      <div class="ctrl"><div class="row"><label>Filename prefix</label></div><input type="text" id="recPrefix" value="chno_run" spellcheck="false" /></div>
+      <div class="ctrl"><div class="row"><label>Molecule snapshot every</label><span class="val mono" id="molIntV">50 steps</span></div><input type="range" id="molInt" min="10" max="1000" step="10" value="50" /></div>
+      <div class="btns" style="margin-top:2px"><button id="recSaveBtn">Save data now</button></div>
+      <div class="note" id="recStatus">Turning this on asks for a folder to save into. Physical-plot data streams continuously; organic-molecule (carbon-containing) snapshots are written every N steps. Data streams to disk (low RAM); stopping recording finalizes the files. Chromium browsers (Chrome/Edge) only.</div>
+    </div>
+  </aside>
+
+  <section class="stage"><canvas id="box"></canvas><div class="ledger" id="ledger"></div></section>
+
+  <aside class="right">
+    <div class="group"><h2>Most abundant species</h2><div class="species" id="species"></div>
+      <div class="note" id="cndist" style="margin-top:8px"></div></div>
+    <div class="group"><h2>Largest carbon chain</h2><div id="bigchain"></div></div>
+    <div class="group"><h2>Amino-acid-like molecule</h2><div id="amino"></div></div>
+    <div class="group"><h2>Energy budget</h2><div class="note" id="ebudget"></div></div>
+  </aside>
+</main>
+
+<footer class="plots">
+  <div class="pcard"><h3>Helmholtz free energy F = U − T·S · internal energy U · entropy gap T·S (shaded)</h3><canvas id="pThermo"></canvas></div>
+  <div class="pcard"><h3>Complexity &amp; diversity over time</h3><canvas id="pComplex"></canvas></div>
+  <div class="pcard"><h3>Molecular size distribution</h3><canvas id="pSize"></canvas></div>
+  <div class="pcard"><h3>Assembly plane · copy number vs complexity</h3><canvas id="pAssembly"></canvas></div>
+</footer>
+
 <script>
-var P = {
-  boxW: 780, boxH: 440,
-  initialSpecies: 25, initialPopPerSpecies: 12,
-  maxSpecies: 500, maxPop: 500, minPop: 40,
-  collisionR: 9, reactionProb: 0.12,
-  decayRate: 0.0003, envReactRate: 0.0008, speedFactor: 1.4,
-  freqMin: 30, freqMax: 600, freqTolerance: 15,
-  csvInterval: 50, simSpeed: 3,
-  // --- energy-driven reaction model ---
-  baseBarrier: 400,      // activation energy with no resonance catalysis
-  resCatalysis: 0.8,     // fraction of barrier removed at perfect resonance
-  resSharp: 4,           // exponent emphasising near-perfect resonance (higher = stricter)
-  kT: 200,               // thermal scale in the Arrhenius factor (higher = more reactive)
-  keCouple: 1.0,         // how much relative kinetic energy feeds the reaction
-  phaseSharp: 2,         // exponent sharpening the phase-coherence requirement
-  envEnergyScale: 2.0,   // converts env-molecule "boost" into vibrational energy injected
-  // --- mass conservation & reversibility ---
-  initMassMin: 2, initMassMax: 6, // integer mass range for primordial species
-  maxModes: 5,           // cap on vibrational modes per molecule (modes ~ sqrt(mass))
-  reservoirInit: 4000,   // initial environmental mass reservoir (units of mass)
-  bondEnergy: 60,        // formation-energy depth per unit mass (sets well depths)
-  modeWellScale: 0.15,   // contribution of mean frequency to formation energy
-  // --- per-molecule physical properties ---
-  radiusBase: 4,         // collision radius = radiusBase * cbrt(mass)
-  floppyScale: 0.4,      // strength of spectrum-based reactivity modulation
-};
-var CHART_H = 160, TREE_H = 220, PHASE_DT = 0.002, DIAG_H = 130;
-var SIMPLE_RATIOS = [1/3,1/2,2/3,3/4,1,4/3,3/2,2,3];
-var PALETTE = [
-  "#ff6b6b","#ffd93d","#6bcb77","#4d96ff","#ff922b","#cc5de8","#20c997","#ff6b9d","#a9e34b","#74c0fc",
-  "#f06595","#fcc419","#38d9a9","#748ffc","#e8590c","#be4bdb","#12b886","#e64980","#94d82d","#4dabf7",
-  "#f76707","#9775fa","#099268","#d6336c","#66a80f","#5c7cfa","#e03131","#ae3ec9","#0ca678","#c2255c",
-  "#5c940d","#4263eb","#ff8787","#da77f2","#63e6be","#91a7ff","#ffa94d","#b197fc","#96f2d7","#a5d8ff",
-  "#ffdeeb","#fff3bf","#d3f9d8","#dbe4ff","#ffe8cc","#f3d9fa","#c3fae8","#ffc9c9","#e9fac8","#bac8ff"
-];
-var ENV_MOLECULES = [
-  {name:"H\u2082O",boost:40},{name:"CO\u2082",boost:70},{name:"NH\u2083",boost:55},
-  {name:"H\u2082S",boost:30},{name:"CH\u2084",boost:25},{name:"Fe\u00B2\u207A",boost:15},
-  {name:"PO\u2084\u00B3\u207B",boost:45},{name:"SO\u2084\u00B2\u207B",boost:35},
-];
-var PREFIXES=["Proto","Thio","Phospho","Carbo","Nitro","Silico","Ferro","Lipido","Glyco","Aldo",
-  "Amino","Keto","Oxo","Sulfo","Cyano","Boro","Seleno","Arseno","Halo","Methyl",
-  "Ethyl","Vinyl","Phenyl","Pyro","Cryo","Hydro","Aero","Geo","Helio","Chromo"];
-var SUFFIXES=["acid","amine","chain","ring","dimer","frame","cluster","tail","ester","ether",
-  "one","al","yl","ose","ite","ate","ide","ane","ene","yne",
-  "ol","thiol","nitrile","amide","oxide","base","salt","gel","mer","plast"];
+"use strict";
+/* =====================================================================================
+   CHNO reactive-collision chemistry in a 3D periodic cube.
+   Molecules are graph particles with 3D position, velocity, and a tumbling orientation;
+   their internal 3D geometry comes from a VSEPR-like force layout (atom repulsion = the
+   physical origin of molecular shape). Reactions fire on 3D collision when the collision
+   energy clears the barrier. Bond enthalpy is exchanged with kinetic+internal energy, so
+   energy and momentum are conserved exactly. Chemistry engine is dimension-independent.
+   ===================================================================================== */
 
-function randName(){return PREFIXES[Math.floor(Math.random()*PREFIXES.length)]+"-"+SUFFIXES[Math.floor(Math.random()*SUFFIXES.length)];}
-function col(id){return PALETTE[id%PALETTE.length];}
-function randFreq(){return Math.round(P.freqMin+(Math.random()*(P.freqMax-P.freqMin)));}
-function resonance(f1,f2){if(!f1||!f2)return 0;var r=Math.min(f1,f2)/Math.max(f1,f2),best=Infinity;for(var k=0;k<SIMPLE_RATIOS.length;k++)best=Math.min(best,Math.abs(r-SIMPLE_RATIOS[k]));return Math.exp(-best*12);}
-function phaseAlign(m1,m2){var a=0,c=0;for(var i=0;i<m1.modes.length;i++)for(var j=0;j<m2.modes.length;j++){a+=Math.cos(Math.atan2(m1.modes[i].pi,m1.modes[i].freq*m1.modes[i].q)-Math.atan2(m2.modes[j].pi,m2.modes[j].freq*m2.modes[j].q));c++;}return c?(a/c+1)/2:0.5;}
-function angleFactor(m1,m2){var dx=m2.x-m1.x,dy=m2.y-m1.y,dvx=m2.vx-m1.vx,dvy=m2.vy-m1.vy;var d=Math.sqrt(dx*dx+dy*dy)||1,v=Math.sqrt(dvx*dvx+dvy*dvy)||1;return Math.max(0,-(dx*dvx+dy*dvy)/(d*v));}
-function advPhase(mol){for(var i=0;i<mol.modes.length;i++){var m=mol.modes[i],w=m.freq*0.01,c=Math.cos(w*PHASE_DT),s=Math.sin(w*PHASE_DT);var nq=m.q*c+(m.pi/(w||1))*s,np=m.pi*c-w*m.q*s;m.q=nq;m.pi=np;}}
-// Harmonic energy of one mode: 1/2 (pi^2 + w^2 q^2), with w = freq*0.01 (matches advPhase).
-function modeEnergy(m){var w=m.freq*0.01;return 0.5*(m.pi*m.pi+w*w*m.q*m.q);}
-function molVibE(mol){var e=0;for(var i=0;i<mol.modes.length;i++)e+=modeEnergy(mol.modes[i]);return e;}
-// Phase of a single mode in its (q, pi/w) plane.
-function modePhase(m){var w=m.freq*0.01||1;return Math.atan2(m.pi/w,m.q);}
-// Find the best-resonating mode pair between two molecules; return its indices, resonance,
-// the vibrational energy stored in that pair, and the pair's phase alignment in [0,1].
-function resonantPair(m1,m2,s1,s2){
-  var bi=0,bj=0,bestRes=0;
-  for(var i=0;i<s1.freqs.length;i++)for(var j=0;j<s2.freqs.length;j++){
-    var rr=resonance(s1.freqs[i],s2.freqs[j]);
-    if(rr>bestRes){bestRes=rr;bi=i;bj=j;}
-  }
-  var pe=modeEnergy(m1.modes[bi])+modeEnergy(m2.modes[bj]);
-  var align=(Math.cos(modePhase(m1.modes[bi])-modePhase(m2.modes[bj]))+1)/2;
-  return {res:bestRes,pairE:pe,align:align};
-}
-// Relative kinetic energy of the collision (reduced-mass form, unit masses).
-function relKinE(m1,m2){var dvx=m2.vx-m1.vx,dvy=m2.vy-m1.vy;return 0.25*(dvx*dvx+dvy*dvy);}
-function prodFreqs(f1s,f2s,boost,nModes){var all=f1s.concat(f2s);var pick=function(){return all[Math.floor(Math.random()*all.length)];};var a=pick(),b=pick();var ops=[function(){return(a+b)/2+(Math.random()-.5)*30;},function(){return Math.abs(a-b)+20+(Math.random()-.5)*20;},function(){return a*.7+b*.3+(Math.random()-.5)*25;},function(){return(a+b)/2+boost*(Math.random()-.3);}];var mk=function(){return Math.max(P.freqMin,Math.min(P.freqMax,ops[Math.floor(Math.random()*ops.length)]()));};if(!nModes)nModes=Math.random()<0.15?3:2;var out=[];for(var i=0;i<nModes;i++)out.push(Math.round(mk()));return out.sort(function(x,y){return x-y;});}
-function findSpecies(reg,freqs,mass){for(var i=0;i<reg.length;i++){if(reg[i].mass!==mass)continue;if(reg[i].freqs.length!==freqs.length)continue;var ok=true;for(var j=0;j<freqs.length;j++)if(Math.abs(reg[i].freqs[j]-freqs[j])>P.freqTolerance){ok=false;break;}if(ok)return reg[i];}return null;}
-// Partition an integer total mass into two parts, each >= 1. Requires total >= 2.
-// Returns null if it cannot be split (caller must then not react).
-function partitionMass(total){
-  if(total<2)return null;
-  var a=1+Math.floor(Math.random()*(total-1)); // a in [1, total-1]
-  return [a, total-a];
-}
-// Number of vibrational modes a molecule of given mass carries (bounded), keeping the
-// length of the frequency list tied to molecular size rather than chosen at random.
-function modesForMass(mass){return Math.max(1,Math.min(P.maxModes,Math.round(Math.sqrt(mass))));}
-// Deterministic formation ("well depth") energy for a species from its frequencies and
-// mass. Detailed balance uses DIFFERENCES of these, so the absolute scale is irrelevant;
-// what matters is that a given (freqs,mass) always maps to the same value so the reverse
-// reaction sees a consistent well. Heavier, higher-frequency molecules sit deeper.
-function formationEnergy(freqs,mass){
-  var e=0;for(var i=0;i<freqs.length;i++)e+=freqs[i];
-  return -(P.bondEnergy*mass) - P.modeWellScale*e/Math.max(1,freqs.length);
-}
-// --- Per-molecule physical properties, all O(1), derived from mass and spectrum ---
-// Collision radius scales with the cube root of mass (constant density sphere): r ~ m^(1/3).
-function molRadius(mass){return P.radiusBase*Math.cbrt(mass);}
-// Maxwell-Boltzmann: at fixed temperature, RMS speed ~ 1/sqrt(mass). Heavy molecules are slow.
-function thermalSpeed(mass){return P.speedFactor/Math.sqrt(mass);}
-// Spectral "floppiness": molecules with low-frequency / closely spaced modes are softer and
-// more reactive. Returns a factor in roughly [0.5,1.5] that multiplies reactivity. Cheap:
-// uses mean frequency (low mean => floppier) normalised against the frequency window.
-function spectralReactivity(freqs){
-  if(!freqs.length)return 1;
-  var mean=0;for(var i=0;i<freqs.length;i++)mean+=freqs[i];mean/=freqs.length;
-  var span=Math.max(1,P.freqMax-P.freqMin);
-  var soft=1 - (mean-P.freqMin)/span;            // 1 at freqMin, 0 at freqMax
-  return 1 + P.floppyScale*(soft-0.5)*2;         // centred near 1
-}
-function mkMol(id,sid,freqs,mass){
-  var sp=thermalSpeed(mass),ang=Math.random()*Math.PI*2;
-  return{id:id,speciesId:sid,mass:mass,r:molRadius(mass),
-    x:Math.random()*P.boxW,y:Math.random()*P.boxH,
-    vx:Math.cos(ang)*sp,vy:Math.sin(ang)*sp,
-    modes:freqs.map(function(f){return{freq:f,q:(Math.random()-.5)*.1,pi:(Math.random()-.5)*.1*f};}),energy:1,age:0};
-}
-// Like mkMol, but seeds mode amplitudes so total vibrational energy equals targetE.
-// Energy is split randomly across modes, then realised as a random phase in each (q, pi/w) plane.
-function mkMolWithE(id,sid,freqs,mass,targetE){
-  var mol=mkMol(id,sid,freqs,mass);
-  var n=mol.modes.length;
-  var weights=[],sum=0;
-  for(var i=0;i<n;i++){var w=Math.random()+0.05;weights.push(w);sum+=w;}
-  for(var i=0;i<n;i++){
-    var m=mol.modes[i],w=m.freq*0.01||1;
-    var ei=Math.max(0,targetE)*weights[i]/sum;       // energy for this mode
-    var amp=Math.sqrt(2*ei);                          // since E = 1/2 (pi^2 + w^2 q^2)
-    var ph=Math.random()*Math.PI*2;
-    m.pi=amp*Math.cos(ph);                            // pi = sqrt(2E) cos(phase)
-    m.q=(amp/w)*Math.sin(ph);                         // w*q = sqrt(2E) sin(phase)
-  }
-  return mol;
-}
-function wrapX(x){x=x%P.boxW;return x<0?x+P.boxW:x;}
-function wrapY(y){y=y%P.boxH;return y<0?y+P.boxH:y;}
-function buildGrid(mols,cellSize){var cols=Math.ceil(P.boxW/cellSize);var rows=Math.ceil(P.boxH/cellSize);var grid=new Array(cols*rows);for(var i=0;i<grid.length;i++)grid[i]=[];for(var i=0;i<mols.length;i++){var cx=Math.floor(mols[i].x/cellSize)%cols;var cy=Math.floor(mols[i].y/cellSize)%rows;if(cx<0)cx+=cols;if(cy<0)cy+=rows;grid[cy*cols+cx].push(i);}return{grid:grid,cols:cols,rows:rows};}
+const R=8.314e-3, VAL={C:4,H:1,N:3,O:2}, MASS={C:12,H:1,N:14,O:16};
+const COL={C:"#5a626d",H:"#eef2f7",N:"#5b8dd6",O:"#e06854"};
+const RAD={C:0.77,H:0.37,N:0.75,O:0.73};          // covalent radii (Å-ish), for geometry
+const BDE={"H-H":{1:436},"C-H":{1:413},"H-N":{1:391},"H-O":{1:463},
+  "C-C":{1:347,2:614,3:839},"C-N":{1:305,2:615,3:891},"C-O":{1:358,2:745,3:1072},
+  "N-N":{1:163,2:418,3:941},"N-O":{1:201,2:607},"O-O":{1:146,2:498}};
+const pk=(a,b)=>a<b?a+"-"+b:b+"-"+a;
+function bdeFull(a,b,o){if(o<=0)return 0;const t=BDE[pk(a,b)];if(t){if(t[o]!=null)return t[o];if(t[1]!=null)return t[1]*(o===2?1.8:2.5);}return 300*(o===1?1:o===2?1.8:2.5);}
+const marg=(a,b,o)=>bdeFull(a,b,o)-bdeFull(a,b,o-1);
 
-var sim,running=false,popHistory=[],csvData=[],events=[],selectedSp=null;
+// ---------- molecule graph (dimension-independent) ----------
+let UID=1;
+const mkMol=(atoms,bonds)=>({atoms:atoms.slice(),bonds:bonds.map(b=>({...b})),id:UID++});
+const orderSum=(m,i)=>{let s=0;for(const b of m.bonds)if(b.a===i||b.b===i)s+=b.o;return s;};
+const freeVal=(m,i)=>VAL[m.atoms[i]]-orderSum(m,i);
+const P={T:900,beta:12,eopen:160,den:0.18,N:900,thermo:true,init:1};
+let dSact=-8;   // reference entropy per molecule C0=-dSact of the bimolecular transition state (J/mol/K) -> steric factor exp(dSact/R); negative = tight, ordered TS (association penalty)
+let SMASS=6;    // translational (mass-dependent) entropy coefficient in S°(m)=SMASS·ln(mass)+C0; net of rotational gain, so below 1.5R
+let Svib=20;    // vibrational/internal entropy per atom (J/mol/K): each atom carries internal modes. Since atoms are conserved in EVERY reaction, Svib·(#atoms) cancels exactly in every ΔS -> dynamics unchanged; it only supplies the (large, physical) internal-entropy baseline that a covalent system actually has, so total S and the F–U gap become realistic instead of vanishing next to the bond energy.
+// ---------- molecular enthalpy ----------
+// Bond energies alone are a crude picture of a molecule. Three structural corrections, all standard chemistry:
+//  1. RADICAL PENALTY is element-specific. An unpaired electron costs different amounts on C, N, O, H (relative to P.eopen).
+//  2. RESONANCE. An amide N–C(=O) is delocalised and stabilised by ~60 kJ/mol — this is *why* the peptide bond survives, and why
+//     urea O=C(NH2)2 (two amide groups) is so stable that it can pay for condensation. A carboxyl/ester O–C(=O) gains ~45 kJ/mol.
+//     Without this, peptide bonds are just generic C–N single bonds and amino acids have no reason to persist.
+//  3. RING STRAIN. Three- and four-membered rings are badly strained (cyclopropane ~115, cyclobutane ~110 kJ/mol). With no strain
+//     term the engine happily makes tiny rings that no chemist would accept.
+const EOPEN={C:1.0,H:1.05,N:0.95,O:0.90};        // per-element scale of the open-valence (radical) penalty
+let E_AMIDE=60, E_ESTER=45, E_STRAIN3=115, E_STRAIN4=110;   // structural energy terms (kJ/mol) - sweepable; bump ENTH_VER after changing
+function adjOf(m){const a=m.atoms.map(()=>[]);for(const b of m.bonds){a[b.a].push(b.b);a[b.b].push(b.a);}return a;}
+function resonance(m){let e=0;                    // delocalisation of a carbonyl into an adjacent N (amide) or O (ester/carboxyl)
+  for(let c=0;c<m.atoms.length;c++){if(m.atoms[c]!=='C')continue;let dblO=false;const sN=[],sO=[];
+    for(const b of m.bonds){const q=b.a===c?b.b:(b.b===c?b.a:-1);if(q<0)continue;
+      if(m.atoms[q]==='O'&&b.o===2)dblO=true; else if(m.atoms[q]==='N'&&b.o===1)sN.push(q); else if(m.atoms[q]==='O'&&b.o===1)sO.push(q);}
+    if(dblO){e-=E_AMIDE*sN.length; e-=E_ESTER*sO.length;}}
+  return e;}
+function ringStrain(m){const n=m.atoms.length;if(m.bonds.length<n)return 0;      // no cycle possible
+  const adj=adjOf(m),S=adj.map(l=>new Set(l));let e=0;
+  for(const b of m.bonds){for(const w of adj[b.a])if(w>b.a&&w>b.b&&S[b.b].has(w))e+=E_STRAIN3;}   // each triangle once
+  for(let u=0;u<n;u++)for(let v=u+1;v<n;v++){if(S[u].has(v))continue;                            // 4-cycles: two non-adjacent atoms with >=2 shared neighbours
+    let k=0;for(const w of adj[u])if(S[v].has(w))k++;
+    if(k>=2)e+=E_STRAIN4*(k*(k-1)/2);}
+  return e;}
+let ENTH_VER=0;   // bump to invalidate cached enthalpies whenever a parameter feeding enthalpy() changes (e.g. the eopen slider)
+const enthalpy=m=>{if(m._hv===ENTH_VER)return m._h;                    // molecules are immutable once built, so cache: enthalpy() is now on the hot path
+  let h=0;for(const b of m.bonds)h-=bdeFull(m.atoms[b.a],m.atoms[b.b],b.o);
+  for(let i=0;i<m.atoms.length;i++)h+=P.eopen*(EOPEN[m.atoms[i]]||1)*freeVal(m,i);
+  h+=resonance(m)+ringStrain(m);m._h=h;m._hv=ENTH_VER;return h;};
+// ---------- implicit solvent (aqueous solution) ----------
+let solvent=true, gammaFric=0.5, ksolv=10;     // solution mode: Langevin friction (viscosity) + hydrophobic solvation scale (kJ/mol per buried surface unit)
+const HFACE={C:1.0,H:0.0,N:-0.6,O:-0.8};       // per-atom surface hydrophobicity: C nonpolar (buries favourably in water), O/N polar (prefer to stay solvated)
+// solvation free energy of a molecule: hydrophobic (C) surface exposed to water is unfavourable, polar (N,O) surface is favourable.
+// Uses the reactive-site (free-valence) surface, so forming a C–C bond buries hydrophobic surface (favourable = hydrophobic effect),
+// while burying a polar site desolvates it (unfavourable). Water release/ordering is folded into this effective free energy.
+function Gsolv(m){let s=0;for(let i=0;i<m.atoms.length;i++)s+=HFACE[m.atoms[i]]*freeVal(m,i);return ksolv*s;}
+function dGsolv(react,prod){let s=0;for(const m of prod)s+=Gsolv(m);for(const m of react)s-=Gsolv(m);return s;}
+const molMass=m=>m.atoms.reduce((s,e)=>s+MASS[e],0);
+function formula(m){const c={C:0,H:0,N:0,O:0};for(const e of m.atoms)c[e]++;let s="";for(const e of["C","H","N","O"])if(c[e])s+=e+(c[e]>1?c[e]:"");return s||"·";}
+function components(atoms,bonds){const n=atoms.length,seen=new Array(n).fill(-1),comps=[];const adj=Array.from({length:n},()=>[]);bonds.forEach((b,bi)=>{adj[b.a].push(bi);adj[b.b].push(bi);});
+  for(let s=0;s<n;s++){if(seen[s]>=0)continue;const st=[s],nd=[];seen[s]=comps.length;while(st.length){const u=st.pop();nd.push(u);for(const bi of adj[u]){const v=bonds[bi].a===u?bonds[bi].b:bonds[bi].a;if(seen[v]<0){seen[v]=comps.length;st.push(v);}}}comps.push(nd.sort((x,y)=>x-y));}
+  return comps.map(nd=>{const mp=new Map();nd.forEach((o,k)=>mp.set(o,k));return mkMol(nd.map(i=>atoms[i]),bonds.filter(b=>mp.has(b.a)&&mp.has(b.b)).map(b=>({a:mp.get(b.a),b:mp.get(b.b),o:b.o})));});}
+const hash32=s=>{let h=2166136261;for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619);}return(h>>>0).toString(36);};
+function canon(m){const n=m.atoms.length;let c=m.atoms.slice();const nb=Array.from({length:n},()=>[]);for(const b of m.bonds){nb[b.a].push([b.b,b.o]);nb[b.b].push([b.a,b.o]);}
+  for(let r=0;r<3;r++){const nc=new Array(n);for(let i=0;i<n;i++){const p=nb[i].map(([j,o])=>c[j]+":"+o).sort();nc[i]=hash32(c[i]+"|"+p.join(","));}c=nc;}
+  return formula(m)+"#"+hash32(c.slice().sort().join("_")+"||"+m.bonds.map(b=>{const x=c[b.a],y=c[b.b];return(x<y?x+y:y+x)+b.o;}).sort().join(","));}
+const barrier=dG=>Math.max(0,dG)+P.beta*(mineral?1-mineralCat*0.7:1);   // mineral surface lowers the activation barrier
 
-function initSim(){
-  var species=[];
-  for(var i=0;i<P.initialSpecies;i++){
-    var mass=P.initMassMin+Math.floor(Math.random()*(P.initMassMax-P.initMassMin+1));
-    var nModes=modesForMass(mass);
-    var freqs=[];for(var k=0;k<nModes;k++)freqs.push(randFreq());freqs.sort(function(a,b){return a-b;});
-    species.push({id:i,name:randName(),freqs:freqs,mass:mass,parent:null,birthStep:0,depth:0});
-  }
-  var mols=[],mid=0,molMass=0;
-  for(var i=0;i<species.length;i++)for(var j=0;j<P.initialPopPerSpecies;j++){mols.push(mkMol(mid++,species[i].id,species[i].freqs,species[i].mass));molMass+=species[i].mass;}
-  // The conserved invariant is (mass in molecules) + (mass in reservoir) == totalMass, always.
-  var reservoir=P.reservoirInit;
-  sim={species:species,mols:mols,nid:mid,nsid:species.length,step:0,reactions:0,revReactions:0,speciation:0,reservoir:reservoir,totalMass:molMass+reservoir,fwdRxn:0,revRxn:0,autoRxn:0,rxnHist:[]};
-  popHistory=[];csvData=[];events=[];selectedSp=null;
-}
-// Verify the global mass invariant. Returns the signed error (0 == perfectly conserved).
-function massError(){
-  var s=0;for(var i=0;i<sim.mols.length;i++)s+=sim.mols[i].mass;
-  return (s+sim.reservoir)-sim.totalMass;
-}
+// ---------- 3D vector + quaternion helpers ----------
+const v3=(x,y,z)=>({x,y,z});
+const add=(a,b)=>v3(a.x+b.x,a.y+b.y,a.z+b.z), sub=(a,b)=>v3(a.x-b.x,a.y-b.y,a.z-b.z), scl=(a,s)=>v3(a.x*s,a.y*s,a.z*s);
+const dot=(a,b)=>a.x*b.x+a.y*b.y+a.z*b.z, len=a=>Math.sqrt(dot(a,a));
+const cross=(a,b)=>v3(a.y*b.z-a.z*b.y,a.z*b.x-a.x*b.z,a.x*b.y-a.y*b.x);
+function gauss(){let u=0,v=0;while(!u)u=Math.random();while(!v)v=Math.random();return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v);}
+const randUnit=()=>{const a=gauss(),b=gauss(),c=gauss(),l=Math.hypot(a,b,c)||1;return v3(a/l,b/l,c/l);};
+function qMul(q,r){return[q[0]*r[0]-q[1]*r[1]-q[2]*r[2]-q[3]*r[3],q[0]*r[1]+q[1]*r[0]+q[2]*r[3]-q[3]*r[2],q[0]*r[2]-q[1]*r[3]+q[2]*r[0]+q[3]*r[1],q[0]*r[3]+q[1]*r[2]-q[2]*r[1]+q[3]*r[0]];}
+function qNorm(q){const l=Math.hypot(q[0],q[1],q[2],q[3])||1;return[q[0]/l,q[1]/l,q[2]/l,q[3]/l];}
+function qRot(q,v){const t=scl(cross(v3(q[1],q[2],q[3]),v),2);return add(add(v,scl(t,q[0])),cross(v3(q[1],q[2],q[3]),t));}
+const randQuat=()=>qNorm([gauss(),gauss(),gauss(),gauss()]);
 
-function getDepth(sp){
-  // Memoized depth from primordial ancestor
-  if(sp._depth!==undefined) return sp._depth;
-  if(!sp.parent){sp._depth=0;return 0;}
-  var maxD=0;
-  for(var i=0;i<sp.parent.length;i++){
-    if(sp.parent[i]===-1) continue;
-    var p=null;for(var j=0;j<sim.species.length;j++)if(sim.species[j].id===sp.parent[i]){p=sim.species[j];break;}
-    if(p) maxD=Math.max(maxD,getDepth(p)+1);
-  }
-  sp._depth=maxD;return maxD;
-}
-
-function stepSim(){
-  var m=sim.mols;
-  for(var s=0;s<P.simSpeed;s++){
-    sim.step++;
-    for(var i=0;i<m.length;i++){m[i].x=wrapX(m[i].x+m[i].vx);m[i].y=wrapY(m[i].y+m[i].vy);advPhase(m[i]);m[i].age++;m[i].energy-=P.decayRate;}
-    // Grid cell must be >= the largest possible contact distance (sum of two largest radii)
-    // or collisions between big molecules would be missed. Size it to the current max radius.
-    var maxR=P.collisionR;for(var i=0;i<m.length;i++)if(m[i].r>maxR)maxR=m[i].r;
-    var cellSize=Math.max(P.collisionR*2.5, maxR*2.2);var g=buildGrid(m,cellSize);var cols=g.cols,rows=g.rows,grid=g.grid;
-    var rmSet={},add=[],collided={};
-    for(var cy=0;cy<rows;cy++){for(var cx=0;cx<cols;cx++){for(var dy=-1;dy<=1;dy++){for(var dx=-1;dx<=1;dx++){
-      var nx=(cx+dx+cols)%cols,ny=(cy+dy+rows)%rows;
-      var cellA=grid[cy*cols+cx],cellB=grid[ny*cols+nx];
-      var sameCell=(cx===nx&&cy===ny);
-      for(var ai=0;ai<cellA.length;ai++){var i=cellA[ai];if(rmSet[i]||collided[i])continue;
-        var startBi=sameCell?ai+1:0;
-        for(var bi=startBi;bi<cellB.length;bi++){if(rmSet[i])break;var j=cellB[bi];if(i===j||rmSet[j]||collided[j])continue;
-          var ddx=m[j].x-m[i].x,ddy=m[j].y-m[i].y;
-          if(ddx>P.boxW/2)ddx-=P.boxW;if(ddx<-P.boxW/2)ddx+=P.boxW;if(ddy>P.boxH/2)ddy-=P.boxH;if(ddy<-P.boxH/2)ddy+=P.boxH;
-          var dist=Math.sqrt(ddx*ddx+ddy*ddy);var contact=m[i].r+m[j].r;if(dist>=contact)continue;
-          collided[i]=true;collided[j]=true;
-          var s1=null,s2=null;for(var si=0;si<sim.species.length;si++){if(sim.species[si].id===m[i].speciesId)s1=sim.species[si];if(sim.species[si].id===m[j].speciesId)s2=sim.species[si];if(s1&&s2)break;}
-          if(!s1||!s2)continue;
-          // --- Energy-driven reactivity (mass-conserving, detailed-balanced) ---
-          // Kinetic gate: the collision must surmount a transition-state barrier. Energy to
-          // cross comes from the resonant mode-pair vibration plus a share of relative KE.
-          // Resonance lowers the barrier (catalysis); the resonant pair must be in phase.
-          var rp=resonantPair(m[i],m[j],s1,s2);
-          var mr=rp.res;
-          var Eavail=rp.pairE + P.keCouple*relKinE(m[i],m[j]);
-          var resSharp=Math.pow(mr,P.resSharp);
-          // Floppier (low-frequency) molecules lower the barrier further; product of both reactants' factors.
-          var react=spectralReactivity(s1.freqs)*spectralReactivity(s2.freqs);
-          var barrier=P.baseBarrier*(1 - P.resCatalysis*resSharp)/Math.max(0.1,react);
-          var coh=Math.pow(rp.align,P.phaseSharp);
-          var kProb=coh*Math.exp(-(barrier-Eavail)/P.kT);
-          if(kProb>1)kProb=1;
-          if(Math.random()<kProb*P.reactionProb){
-            // MASS CONSERVATION: the two products share exactly the reactants' combined mass.
-            var Mtot=m[i].mass+m[j].mass;
-            var part=partitionMass(Mtot);            // each part >= 1; Mtot >= 2 always
-            if(!part){ // cannot split (shouldn't happen for Mtot>=2) -> treat as elastic
-              var nrmx0=ddx/(dist||1),nrmy0=ddy/(dist||1);var rv0=(m[j].vx-m[i].vx)*nrmx0+(m[j].vy-m[i].vy)*nrmy0;
-              if(rv0<0){m[i].vx+=rv0*nrmx0;m[i].vy+=rv0*nrmy0;m[j].vx-=rv0*nrmx0;m[j].vy-=rv0*nrmy0;}
-              continue;
-            }
-            var env=ENV_MOLECULES[Math.floor(Math.random()*ENV_MOLECULES.length)];
-            var ma=part[0],mb=part[1];
-            var fa=prodFreqs(s1.freqs,s2.freqs,env.boost,modesForMass(ma));
-            var fb=prodFreqs(s1.freqs,s2.freqs,env.boost,modesForMass(mb));
-            // DETAILED BALANCE: accept the rearrangement with a thermodynamic factor based on
-            // the change in formation (well) energy. Downhill always proceeds; uphill proceeds
-            // with prob exp(-dE/kT). The reverse channel below uses the same rule with dE
-            // negated, so k_fwd/k_rev = exp(-(E_prod-E_react)/kT) exactly.
-            var Ereact=formationEnergy(s1.freqs,s1.mass)+formationEnergy(s2.freqs,s2.mass);
-            var EprodF=formationEnergy(fa,ma)+formationEnergy(fb,mb);
-            var dE=EprodF-Ereact;
-            if(dE>0 && Math.random()>=Math.exp(-dE/P.kT)){
-              // rejected by detailed balance -> elastic bounce, mass untouched
-              var nrmx1=ddx/(dist||1),nrmy1=ddy/(dist||1);var rv1=(m[j].vx-m[i].vx)*nrmx1+(m[j].vy-m[i].vy)*nrmy1;
-              if(rv1<0){m[i].vx+=rv1*nrmx1;m[i].vy+=rv1*nrmy1;m[j].vx-=rv1*nrmx1;m[j].vy-=rv1*nrmy1;}
-              continue;
-            }
-            var getOrMake=function(freqs,mass,sp1,sp2){
-              var ex=findSpecies(sim.species,freqs,mass);
-              if(ex)return ex;
-              // Species cap reached: we may only reuse an EXISTING species, and only if its
-              // mass exactly equals the required partition mass (otherwise reusing it would
-              // change the product's mass and break conservation). If neither reactant matches,
-              // return null so the caller declines the reaction (elastic bounce) rather than
-              // substituting a wrong-mass species.
-              if(sim.species.length>=P.maxSpecies){
-                if(sp1.mass===mass)return sp1;
-                if(sp2.mass===mass)return sp2;
-                return null;
-              }
-              var d1=sp1._depth!==undefined?sp1._depth:0;var d2=sp2._depth!==undefined?sp2._depth:0;
-              var sp={id:sim.nsid++,name:randName(),freqs:freqs,mass:mass,parent:[sp1.id,sp2.id],
-                birthStep:sim.step,depth:Math.max(d1,d2)+1,_depth:Math.max(d1,d2)+1};
-              sim.species.push(sp);sim.speciation++;
-              events.unshift("\u26A1 "+sp.name+" [m"+mass+"] from "+sp1.name+"+"+sp2.name);
-              if(events.length>60)events.length=60;
-              return sp;
-            };
-            var preCount=sim.species.length;
-            var ps1=getOrMake(fa,ma,s1,s2),ps2=getOrMake(fb,mb,s1,s2);
-            if(!ps1||!ps2){ // capped and not reconstructible without violating mass -> elastic
-              var nrmx2=ddx/(dist||1),nrmy2=ddy/(dist||1);var rv2=(m[j].vx-m[i].vx)*nrmx2+(m[j].vy-m[i].vy)*nrmy2;
-              if(rv2<0){m[i].vx+=rv2*nrmx2;m[i].vy+=rv2*nrmy2;m[j].vx-=rv2*nrmx2;m[j].vy-=rv2*nrmy2;}
-              continue;
-            }
-            rmSet[i]=true;rmSet[j]=true;sim.reactions++;
-            // Reaction classification: if a product species is brand-new, this explored new
-            // chemical space ("forward/novel"); if both products already existed, it relaxed
-            // toward known species ("reverse/recombination"). Visualises reversibility directly.
-            if(sim.species.length>preCount){sim.fwdRxn++;}else{sim.revRxn++;}
-            // Autocatalysis: a reactant species that reappears as a product is catalysing its
-            // own (re)formation. Count per species and globally.
-            if(ps1.id===s1.id||ps1.id===s2.id||ps2.id===s1.id||ps2.id===s2.id){
-              sim.autoRxn++;
-              var ac=(ps1.id===s1.id||ps1.id===s2.id)?ps1:ps2;
-              ac.autocat=(ac.autocat||0)+1;
-            }
-            // Vibrational energy bookkeeping (separate ledger from mass): products carry the
-            // reactants' vibrational energy + reacted KE, minus the barrier, plus exothermicity
-            // released by moving to a deeper well (-dE when dE<0).
-            var Ein=molVibE(m[i])+molVibE(m[j])+P.keCouple*relKinE(m[i],m[j]);
-            var Eprod=Math.max(0, Ein - barrier - Math.min(0,dE));
-            var split=0.3+Math.random()*0.4;
-            var mx=(m[i].x+m[j].x)/2,my=(m[i].y+m[j].y)/2;
-            var n1=mkMolWithE(sim.nid++,ps1.id,ps1.freqs,ps1.mass,Eprod*split),n2=mkMolWithE(sim.nid++,ps2.id,ps2.freqs,ps2.mass,Eprod*(1-split));
-            // Separate products along a random axis by the sum of their radii; give each its
-            // own mass-dependent thermal speed (heavy products recoil slower).
-            var sa=Math.random()*Math.PI*2,sd=(n1.r+n2.r)*0.6;
-            n1.x=wrapX(mx+Math.cos(sa)*sd);n1.y=wrapY(my+Math.sin(sa)*sd);n1.vx=Math.cos(sa)*thermalSpeed(n1.mass);n1.vy=Math.sin(sa)*thermalSpeed(n1.mass);
-            n2.x=wrapX(mx-Math.cos(sa)*sd);n2.y=wrapY(my-Math.sin(sa)*sd);n2.vx=-Math.cos(sa)*thermalSpeed(n2.mass);n2.vy=-Math.sin(sa)*thermalSpeed(n2.mass);
-            add.push(n1,n2);
-          }else{
-            var nrmx=ddx/(dist||1),nrmy=ddy/(dist||1);var rv=(m[j].vx-m[i].vx)*nrmx+(m[j].vy-m[i].vy)*nrmy;
-            if(rv<0){m[i].vx+=rv*nrmx;m[i].vy+=rv*nrmy;m[j].vx-=rv*nrmx;m[j].vy-=rv*nrmy;}
-            var overlap=contact-dist;if(overlap>0){var pd=(overlap/2)+0.5;m[i].x=wrapX(m[i].x-nrmx*pd);m[i].y=wrapY(m[i].y-nrmy*pd);m[j].x=wrapX(m[j].x+nrmx*pd);m[j].y=wrapY(m[j].y+nrmy*pd);}
-          }
-        }
-      }
-    }}}}
-    var envAdd=[];
-    for(var i=0;i<m.length;i++){if(rmSet[i]||Math.random()>=P.envReactRate)continue;
-      var sp=null;for(var si=0;si<sim.species.length;si++)if(sim.species[si].id===m[i].speciesId){sp=sim.species[si];break;}
-      if(!sp)continue;var env2=ENV_MOLECULES[Math.floor(Math.random()*ENV_MOLECULES.length)];
-      // Environmental accretion: the molecule grows by absorbing g units of mass FROM the
-      // reservoir. Mass is conserved globally: reservoir -= g. If the reservoir is empty, skip.
-      var g=1+Math.floor(Math.random()*2); // grow by 1-2 units
-      if(sim.reservoir<g)continue;
-      var newMass=sp.mass+g;
-      var pf=prodFreqs(sp.freqs,sp.freqs,env2.boost*2,modesForMass(newMass));
-      var ps=findSpecies(sim.species,pf,newMass);
-      if(!ps){if(sim.species.length>=P.maxSpecies)continue;var d0=sp._depth!==undefined?sp._depth:0;ps={id:sim.nsid++,name:randName(),freqs:pf,mass:newMass,parent:[sp.id,-1],birthStep:sim.step,depth:d0+1,_depth:d0+1};sim.species.push(ps);sim.speciation++;events.unshift("\uD83C\uDF0A "+ps.name+" [m"+newMass+"] from "+sp.name+"+"+env2.name);if(events.length>60)events.length=60;}
-      if(m.length+add.length+envAdd.length<P.maxPop){
-        sim.reservoir-=g;                       // <-- mass leaves the reservoir, enters the molecule
-        var Eenv=molVibE(m[i])+env2.boost*P.envEnergyScale;
-        var nm=mkMolWithE(sim.nid++,ps.id,ps.freqs,ps.mass,Eenv);
-        nm.x=wrapX(m[i].x+(Math.random()-.5)*20);nm.y=wrapY(m[i].y+(Math.random()-.5)*20);
-        rmSet[i]=true;                          // old (lighter) molecule is consumed
-        envAdd.push(nm);
+// ---------- 3D molecular geometry (VSEPR-like force layout, cached) ----------
+const geoCache=new Map();
+const LONE={C:0,H:0,N:1,O:2};   // neutral lone-pair count (approx) — sets VSEPR shape
+function geometry(m){
+  const k=canon(m); if(geoCache.has(k))return geoCache.get(k);
+  const n=m.atoms.length;
+  if(n===1){const p=[v3(0,0,0)];geoCache.set(k,p);return p;}
+  const nbr=Array.from({length:n},()=>[]); for(const b of m.bonds){nbr[b.a].push(b.b);nbr[b.b].push(b.a);}
+  const lp=[]; for(let i=0;i<n;i++)if(nbr[i].length>=2)for(let q=0;q<(LONE[m.atoms[i]]||0);q++)lp.push({parent:i,rest:RAD[m.atoms[i]]+0.37});
+  const NL=lp.length;
+  const restB=b=>(RAD[m.atoms[b.a]]+RAD[m.atoms[b.b]])*(b.o===1?1:b.o===2?0.88:0.80);
+  // domains around each central atom = bonded neighbours + its lone pairs (indices n+q)
+  const dom=Array.from({length:n},(_,c)=>nbr[c].slice()); lp.forEach((o,q)=>dom[o.parent].push(n+q));
+  // geminal (1-3) atom pairs are already handled by VSEPR; exclude them from anti-overlap
+  const gem=new Set(); for(let c=0;c<n;c++){const D=nbr[c];for(let a=0;a<D.length;a++)for(let b=a+1;b<D.length;b++){gem.add(D[a]+"_"+D[b]);gem.add(D[b]+"_"+D[a]);}}
+  const sh=Math.min(14,4+(n>>2)), iters=Math.min(300,140+n*4), RS=n<=14?4:1;   // multi-restart only for small molecules
+  let best=null,bestE=Infinity;
+  for(let rs=0;rs<RS;rs++){                       // restarts: keep lowest-energy (best-spread) layout
+    let pos=m.atoms.map(()=>v3(gauss(),gauss(),gauss()));
+    let lpp=lp.map(o=>add(pos[o.parent],scl(randUnit(),0.6)));
+    const gp=i=>i<n?pos[i]:lpp[i-n];
+    for(let it=0;it<iters;it++){
+      const F=pos.map(()=>v3(0,0,0)), LF=lpp.map(()=>v3(0,0,0));
+      const addF=(i,v)=>{if(i<n)F[i]=add(F[i],v);else LF[i-n]=add(LF[i-n],v);};
+      // LOCAL VSEPR: only domains sharing a common atom repel -> sets bond angles, no backbone distortion
+      for(let c=0;c<n;c++){const D=dom[c];
+        for(let a=0;a<D.length;a++)for(let b=a+1;b<D.length;b++){const i=D[a],j=D[b];
+          let d=sub(gp(i),gp(j));let r2=dot(d,d)+0.03;let s=1.1/r2;const u=scl(d,1/Math.sqrt(r2));addF(i,scl(u,s));addF(j,scl(u,-s));}}
+      // weak short-range anti-overlap between FAR (>=1-4) non-bonded atoms only
+      for(let i=0;i<n;i++)for(let j=i+1;j<n;j++){if(nbr[i].includes(j)||gem.has(i+"_"+j))continue;let d=sub(pos[i],pos[j]);let r2=dot(d,d)+0.05;if(r2>4)continue;let s=0.06/r2;const u=scl(d,1/Math.sqrt(r2));F[i]=add(F[i],scl(u,s));F[j]=sub(F[j],scl(u,s));}
+      for(let i=0;i<n;i++){const l=len(F[i]);const c=l>0.3?0.3/l:1;pos[i]=add(pos[i],scl(F[i],0.2*c));}
+      for(let q=0;q<NL;q++){const l=len(LF[q]);const c=l>0.3?0.3/l:1;lpp[q]=add(lpp[q],scl(LF[q],0.2*c));}
+      // SHAKE: snap bonds and lone-pair links to rest length (both endpoints move -> symmetric)
+      for(let pass=0;pass<sh;pass++){
+        for(const b of m.bonds){const rest=restB(b);let d=sub(pos[b.b],pos[b.a]);let l=len(d)||1;const c=(l-rest)/l*0.5;pos[b.a]=add(pos[b.a],scl(d,c));pos[b.b]=sub(pos[b.b],scl(d,c));}
+        for(let q=0;q<NL;q++){const o=lp[q];let d=sub(lpp[q],pos[o.parent]);let l=len(d)||1;const c=(l-o.rest)/l*0.5;lpp[q]=sub(lpp[q],scl(d,c));pos[o.parent]=add(pos[o.parent],scl(d,c));}
       }
     }
-    var rmCount=0;for(var k in rmSet)rmCount++;
-    // Decay/death: a molecule that loses all energy dissolves, returning its mass to the reservoir.
-    for(var i=0;i<m.length;i++)if(!rmSet[i]&&m[i].energy<=0&&m.length-rmCount+add.length+envAdd.length>P.minPop){rmSet[i]=true;rmCount++;sim.reservoir+=m[i].mass;}
-    var surviving=[];for(var i=0;i<m.length;i++)if(!rmSet[i])surviving.push(m[i]);
-    sim.mols=surviving.concat(add).concat(envAdd);
-    // Population cap: randomly removed molecules also return their mass to the reservoir.
-    while(sim.mols.length>P.maxPop){var ri=Math.floor(Math.random()*sim.mols.length);sim.reservoir+=sim.mols[ri].mass;sim.mols.splice(ri,1);}
-    // prune extinct species so the cap tracks living lineages, not all-time count
-    if(sim.step%50<P.simSpeed){
-      var living={};for(var i=0;i<sim.mols.length;i++)living[sim.mols[i].speciesId]=true;
-      // keep living species AND any species that is an ancestor of a living one
-      var keep={};
-      for(var i=0;i<sim.species.length;i++){
-        var sp=sim.species[i];
-        if(living[sp.id]||!sp.parent){keep[sp.id]=true;}
-      }
-      // walk parents of living species upward to preserve lineage chains for the tree
-      var frontier=Object.keys(living).map(Number);
-      while(frontier.length){
-        var id=frontier.pop();var sp=null;
-        for(var j=0;j<sim.species.length;j++)if(sim.species[j].id===id){sp=sim.species[j];break;}
-        if(sp&&sp.parent)for(var k=0;k<sp.parent.length;k++)
-          if(sp.parent[k]!==-1&&!keep[sp.parent[k]]){keep[sp.parent[k]]=true;frontier.push(sp.parent[k]);}
-      }
-      sim.species=sim.species.filter(function(s){return keep[s.id];});
+    let E=0;for(let c=0;c<n;c++){const D=dom[c];for(let a=0;a<D.length;a++)for(let b=a+1;b<D.length;b++)E+=1/(len(sub(gp(D[a]),gp(D[b])))+0.01);}
+    for(const b of m.bonds){const e=len(sub(pos[b.a],pos[b.b]))/restB(b)-1;E+=200*e*e;}   // reject layouts with stretched bonds
+    if(E<bestE){bestE=E;best=pos.map(p=>({...p}));}
+  }
+  // final bond-length projection: guarantee physical bond lengths (Gauss-Seidel to convergence)
+  for(let pass=0;pass<80;pass++){let err=0;
+    for(const b of m.bonds){const rest=restB(b);let d=sub(best[b.b],best[b.a]);let l=len(d)||1;const c=(l-rest)/l*0.5;best[b.a]=add(best[b.a],scl(d,c));best[b.b]=sub(best[b.b],scl(d,c));err=Math.max(err,Math.abs(l-rest)/rest);}
+    if(err<0.01)break;
+  }
+  let c=v3(0,0,0);for(const p of best)c=add(c,p);c=scl(c,1/n);best=best.map(p=>sub(p,c));
+  geoCache.set(k,best);return best;
+}
+const molRadius=m=>{let v=0;for(const e of m.atoms)v+=RAD[e]*RAD[e]*RAD[e];return Math.cbrt(v)*GEO*1.7+2;};  // cheap size estimate for collisions; full 3D layout is done lazily at render time
+
+// ---------- state ----------
+const GEO=3.0;                    // world units per Å (geometry scale)
+let parts=[], L=100, steps=0, simTime=0, running=false, heatBath=0;
+let autoTherm=false, tLow=450, tHigh=1000, tPeriod=800;   // prebiotic thermal cycling
+let wetdry=false, dryPeriod=1200, dryness=0, Lbase=100;   // wet-dry cycling (Damer-Deamer kinetic trap)
+let mineral=false, mineralCat=0.5;                        // mineral surface catalysis + product protection (Ferris/Waechtershaeuser)
+let dilution=0;                                           // chemostat outflow / washout rate (CSTR selection)
+let discharge=false, dischargeRate=0.03, dischargeE=1000; // spark/lightning: rare high-energy deposition able to crack N≡N -> prebiotic nitrogen fixation (Miller-Urey)
+let condStab=45;                                          // mineral-surface stabilisation (kJ/mol) of a condensed (amide/ester) bond: on a clay surface the condensed product sits in a lower-water-activity, product-stabilising niche, so condensation is favoured and hydrolysis suppressed (Ferris/Wächtershäuser). Applied as a real ΔG shift (dH_cond−=S, dH_hyd+=S) so detailed balance is preserved; the condensed bond becomes a protected, persistent state.
+const hist={ke:[],u:[],pe:[],F:[],TS:[],meanA:[],maxA:[],species:[],T:[]};
+const RECIPE={H:{a:["H"],b:[]},C:{a:["C"],b:[]},N:{a:["N"],b:[]},O:{a:["O"],b:[]},
+  H2:{a:["H","H"],b:[{a:0,b:1,o:1}]},H2O:{a:["O","H","H"],b:[{a:0,b:1,o:1},{a:0,b:2,o:1}]},
+  NH3:{a:["N","H","H","H"],b:[{a:0,b:1,o:1},{a:0,b:2,o:1},{a:0,b:3,o:1}]},
+  CH4:{a:["C","H","H","H","H"],b:[{a:0,b:1,o:1},{a:0,b:2,o:1},{a:0,b:3,o:1},{a:0,b:4,o:1}]},
+  CO:{a:["C","O"],b:[{a:0,b:1,o:2}]},N2:{a:["N","N"],b:[{a:0,b:1,o:3}]},CO2:{a:["C","O","O"],b:[{a:0,b:1,o:2},{a:0,b:2,o:2}]},
+  O2:{a:["O","O"],b:[{a:0,b:1,o:2}]},
+  // fuel: cyanamide N≡C–NH2, a genuine prebiotic condensing agent. Waste: urea O=C(NH2)2 (very stable — that stability is the free energy that pays for condensation).
+  NH2CN:{a:["C","N","N","H","H"],b:[{a:0,b:1,o:3},{a:0,b:2,o:1},{a:2,b:3,o:1},{a:2,b:4,o:1}]},
+  // formic acid H–COOH: the simplest carboxylic acid and a canonical prebiotic species. Crucially it carries a real –OH, the group condensation needs.
+  HCOOH:{a:["C","O","O","H","H"],b:[{a:0,b:1,o:2},{a:0,b:2,o:1},{a:2,b:3,o:1},{a:0,b:4,o:1}]},
+  CH2O:{a:["C","O","H","H"],b:[{a:0,b:1,o:2},{a:0,b:2,o:1},{a:0,b:3,o:1}]}};
+function mbVel(mass){const s=Math.sqrt(R*P.T/mass);return v3(s*gauss(),s*gauss(),s*gauss());}
+function mkPart(spec){const m=mkMol(RECIPE[spec].a,RECIPE[spec].b);const mass=molMass(m);const vv=mbVel(mass);
+  return {mol:m,p:v3(Math.random()*L,Math.random()*L,Math.random()*L),v:vv,q:randQuat(),w:scl(randUnit(),0.6+Math.random()),Eint:0,r:molRadius(m),m:mass};}
+function seed(){parts=[];let rec=[];
+  if(P.init===0){const nH=Math.round(P.N*0.42),nC=Math.round(P.N*0.16),nN=Math.round(P.N*0.11),nO=Math.round(P.N*0.13),nH2=P.N-nH-nC-nN-nO;
+    for(let i=0;i<nH;i++)rec.push("H");for(let i=0;i<nC;i++)rec.push("C");for(let i=0;i<nN;i++)rec.push("N");for(let i=0;i<nO;i++)rec.push("O");for(let i=0;i<nH2;i++)rec.push("H2");}
+  else{const mix=["H2","H2","H2O","NH3","CH4","CO","N2","CO2"];for(let i=0;i<P.N;i++)rec.push(mix[i%mix.length]);}
+  let vol=0;for(const s of rec){const m=mkMol(RECIPE[s].a,RECIPE[s].b);const r=molRadius(m);vol+=4/3*Math.PI*r*r*r;}
+  L=Math.cbrt(vol/P.den); Lbase=L;
+  for(const s of rec)parts.push(mkPart(s));
+}
+// ---------- feedstock bath (open-system chemostat) ----------
+const BATH_LIST=["H2","H2O","CO2","N2","CO","NH3","CH4","O2","HCOOH","CH2O"];
+const bathEnabled={}; BATH_LIST.forEach(s=>bathEnabled[s]=false);
+let bathTarget=120, bathForm={}, bathFormActive=new Set();
+// Representative prebiotic compositions (relative mole fractions, H2O = 1). O2 ~ 0: Earth was
+// anoxic before the Great Oxidation Event. These are model mixes, not precise measurements.
+const BATH_SCENARIOS={
+  neutral:{label:"Neutral · Hadean",  frac:{H2O:1.0, N2:0.6, CO2:0.5, CO:0.10, H2:0.08, CH4:0.02, NH3:0.01, O2:0, HCOOH:0.15, CH2O:0.10}},
+  reducing:{label:"Reducing · Miller", frac:{H2O:1.0, H2:0.5, CH4:0.35,N2:0.25, CO:0.15, NH3:0.12, CO2:0.10, O2:0, HCOOH:0.45, CH2O:0.30}},
+  volcanic:{label:"Volcanic outgassing",frac:{H2O:1.0, CO2:0.35,CO:0.06, H2:0.05, N2:0.04, CH4:0.008,NH3:0.002,O2:0, HCOOH:0.10, CH2O:0.06}}};
+let bathScenario="neutral";
+function bathTargetFor(s){return Math.round(bathTarget*(BATH_SCENARIOS[bathScenario].frac[s]||0));}
+let CAP=2500;                                  // safety cap on total molecules (washout of products)
+let MAXATOMS=200;                              // max atoms per molecule. Raised from 50: with sampled (not enumerated) reaction candidates
+                                               // the cost of a collision is O(atoms), so a high ceiling is nearly free. 50 was censoring the data.
+function initBathKeys(){for(const s of BATH_LIST)bathForm[s]=formula(mkMol(RECIPE[s].a,RECIPE[s].b));}
+function updBathActive(){bathFormActive=new Set();for(const s of BATH_LIST)if(bathEnabled[s]&&bathTargetFor(s)>0)bathFormActive.add(bathForm[s]);}
+function bathAny(){for(const s of BATH_LIST)if(bathEnabled[s]&&bathTargetFor(s)>0)return true;return false;}
+function maintainBath(){
+  if(!bathAny()&&dilution<=0)return;
+  const molE=p=>enthalpy(p.mol)+0.5*p.m*dot(p.v,p.v)+p.Eint;   // total energy a molecule carries across the boundary
+  const byForm=new Map();
+  parts.forEach((p,i)=>{const f=formula(p.mol);let a=byForm.get(f);if(!a){a=[];byForm.set(f,a);}a.push(i);});
+  const remove=new Set();
+  for(const s of BATH_LIST){ if(!bathEnabled[s])continue; let tgt=bathTargetFor(s);
+    if(wetdry&&s==="H2O")tgt=Math.round(tgt*(1-dryness*0.9));                     // water evaporates during the dry phase
+    if(tgt<=0){const idxs0=byForm.get(bathForm[s])||[];for(const i of idxs0)remove.add(i);continue;}
+    const idxs=byForm.get(bathForm[s])||[];
+    if(idxs.length>tgt){for(let j=tgt;j<idxs.length;j++)remove.add(idxs[j]);}     // clamp reservoir to its concentration
+    else{for(let j=idxs.length;j<tgt;j++){const np=mkPart(s);heatBath-=molE(np);parts.push(np);}}}  // feed: energy from reservoir
+  if(remove.size){for(const i of remove)heatBath+=molE(parts[i]);parts=parts.filter((_,i)=>!remove.has(i));}  // clamp: energy to reservoir
+  if(dilution>0){                                // CSTR outflow: wash out products at the dilution rate (selection pressure)
+    const drop=new Set();for(let i=0;i<parts.length;i++){const p=parts[i];if(!bathFormActive.has(formula(p.mol))&&Math.random()<dilution){drop.add(i);heatBath+=molE(p);}}
+    if(drop.size)parts=parts.filter((_,i)=>!drop.has(i));}
+  if(parts.length>CAP){                          // finite reactor: hard cap as a safety net
+    const prod=[];parts.forEach((p,i)=>{if(!bathFormActive.has(formula(p.mol)))prod.push(i);});
+    const drop=new Set();for(let k=0;k<parts.length-CAP&&prod.length;k++){const j=(Math.random()*prod.length)|0;drop.add(prod[j]);prod.splice(j,1);}
+    if(drop.size){for(const i of drop)heatBath+=molE(parts[i]);parts=parts.filter((_,i)=>!drop.has(i));}}
+}
+function wrap(p){p.p.x=((p.p.x%L)+L)%L;p.p.y=((p.p.y%L)+L)%L;p.p.z=((p.p.z%L)+L)%L;}
+const mi=d=>d-L*Math.round(d/L);
+
+// ---------- reactions (graph edits; dimension-independent) ----------
+function combined(list){const atoms=[],bonds=[],off=[];for(const p of list){off.push(atoms.length);const base=atoms.length;p.mol.atoms.forEach(e=>atoms.push(e));p.mol.bonds.forEach(b=>bonds.push({a:b.a+base,b:b.b+base,o:b.o}));}return{atoms,bonds,off};}
+const curOrder=(bonds,i,j)=>{for(const b of bonds)if((b.a===i&&b.b===j)||(b.a===j&&b.b===i))return b.o;return 0;};
+const freeInC=(atoms,bonds,i)=>{let s=0;for(const b of bonds)if(b.a===i||b.b===i)s+=b.o;return VAL[atoms[i]]-s;};
+// standard-state entropy of a species (J/mol/K): Sackur-Tetrode translational mass term + a per-molecule reference constant.
+// C0 (= -dSact, a positive number) is the reference entropy each molecule carries; it sets the molecularity penalty,
+// i.e. how much translational entropy is lost when two particles merge into one (association) or gained on dissociation.
+function SstdJ(m){return SMASS*Math.log(molMass(m)) + Svib*m.atoms.length + (-dSact);}   // translational (mass) + internal (per-atom vibrational) + C0 reference; the per-atom term cancels in every atom-conserving ΔS
+function dSrxnJ(react,prod){let s=0;for(const m of prod)s+=SstdJ(m);for(const m of react)s-=SstdJ(m);return s;}
+// ---------- condensation / hydrolysis (water-coupled growth; no radicals needed) ----------
+// A hydroxyl-like leaving group: an O bonded to exactly one H and one heavy atom (–OH), or an N–H amine site collapsed to its heavy carrier.
+function hydroxyls(atoms,bonds,lo,hi){const res=[];for(let o=lo;o<hi;o++){if(atoms[o]!=='O')continue;let hs=[],hv=[];for(const b of bonds){const q=b.a===o?b.b:(b.b===o?b.a:-1);if(q<0)continue;if(atoms[q]==='H')hs.push(q);else hv.push([q,b.o]);}if(hs.length===1&&hv.length===1&&hv[0][1]===1)res.push({o,h:hs[0],a1:hv[0][0]});}return res;}
+// An H-donor: a heavy atom carrying at least one H that can leave (–XH, X=C,N,O).
+function donors(atoms,bonds,lo,hi){const res=[];for(let x=lo;x<hi;x++){if(atoms[x]==='H')continue;for(const b of bonds){const q=b.a===x?b.b:(b.b===x?b.a:-1);if(q>=0&&atoms[q]==='H'){res.push({b1:x,h2:q});break;}}}return res;}
+const isWaterMol=m=>m.atoms.length===3&&formula(m)==='H2O';
+// ---------- fuel-driven activation (the thermodynamic drive) ----------
+// Condensation in water is uphill, so an undriven box relaxes to a small-molecule equilibrium. Real prebiotic chemistry escapes this by
+// spending a high-free-energy FUEL. Here: cyanamide (N≡C–NH2) activates an –OH into an isourea leaving group –O–C(=NH)NH2; condensing that
+// group expels the very stable UREA, and urea's stability is what pays for the new bond. Fuel is held above equilibrium and waste removed
+// (a Rao–Esposito chemostat), so the network sits at a driven non-equilibrium steady state. Every step below has its explicit microscopic
+// reverse (act/deact, acond/ahyd) and uses the same barrier(ΔG) transition state, so detailed balance of the ELEMENTARY steps still holds;
+// the drive comes entirely from holding fuel/waste off-equilibrium, never from breaking reversibility.
+function nitrileSite(atoms,bonds,lo,hi){for(let c=lo;c<hi;c++){if(atoms[c]!=='C')continue;let nT=-1,nS=-1;
+  for(const b of bonds){const q=b.a===c?b.b:(b.b===c?b.a:-1);if(q<lo||q>=hi||atoms[q]!=='N')continue;if(b.o===3)nT=q;else if(b.o===1)nS=q;}
+  if(nT>=0&&nS>=0)return {c,nT};}return null;}                                      // the fuel's N≡C–N motif
+function isoureaSite(atoms,bonds,lo,hi){for(let o=lo;o<hi;o++){if(atoms[o]!=='O')continue;const hv=[];let bad=false;
+  for(const b of bonds){const q=b.a===o?b.b:(b.b===o?b.a:-1);if(q<0)continue;if(atoms[q]==='H'){bad=true;break;}hv.push([q,b.o]);}
+  if(bad||hv.length!==2||hv[0][1]!==1||hv[1][1]!==1)continue;
+  for(let k=0;k<2;k++){const c=hv[k][0],a1=hv[1-k][0];if(atoms[c]!=='C')continue;let nD=-1,nS=-1;
+    for(const b of bonds){const q=b.a===c?b.b:(b.b===c?b.a:-1);if(q<0||atoms[q]!=='N')continue;if(b.o===2)nD=q;else if(b.o===1)nS=q;}
+    if(nD>=0&&nS>=0)return {o,a1,c,nD};}}
+  return null;}                                                                      // the activated –O–C(=NH)NH2 group
+function ureaSite(atoms,bonds,lo,hi){for(let c=lo;c<hi;c++){if(atoms[c]!=='C')continue;let o=-1;const ns=[];
+  for(const b of bonds){const q=b.a===c?b.b:(b.b===c?b.a:-1);if(q<0)continue;if(atoms[q]==='O'&&b.o===2)o=q;else if(atoms[q]==='N'&&b.o===1)ns.push(q);}
+  if(o<0||ns.length!==2)continue;
+  for(const n of ns)for(const b of bonds){const q=b.a===n?b.b:(b.b===n?b.a:-1);if(q>=0&&atoms[q]==='H')return {c,o,nD:n,h:q};}}
+  return null;}                                                                      // waste urea O=C(NH2)2
+const isFuelMol=m=>m.atoms.length===5&&!!nitrileSite(m.atoms,m.bonds,0,5);
+const isUreaMol=m=>m.atoms.length===8&&!!ureaSite(m.atoms,m.bonds,0,8);
+let fuelOn=false, fuelTarget=60, wasteOut=0.05, wChem=0;   // chemostatted fuel level, waste washout rate, cumulative chemical work supplied
+// Kinetic protection of the finished bond. Applied to the UNCATALYSED water route (cond/hyd) only, and to BOTH of its directions, so the
+// cond/hyd pair keeps its shared transition state and detailed balance is untouched. The fuel route (acond/ahyd) keeps the base barrier, so
+// it becomes the fast way to MAKE a bond while water remains a slow way to break one — exactly why amide/ester bonds survive in water.
+// (Raising this barrier without a fuel route would suppress formation too; that is why it only works once activation chemistry exists.)
+let condBarrier=55;
+// per-reaction-class event counters (reaction fluxes). Needed to audit which channels actually carry the drive, and are the
+// raw material for entropy-production / thermodynamic-force accounting (sigma = sum_rho J_rho * A_rho).
+const RXN={comb:0,sr:0,dr:0,cond:0,hyd:0,act:0,acond:0,ahyd:0,deact:0,decomp:0};
+// Cumulative Gibbs energy of every accepted reaction, per class. Differentiating cum_dG_<class> in time
+// gives the free-energy flux carried by that channel; -d(sum dG)/dt / T is the entropy production rate.
+const RXNG={comb:0,sr:0,dr:0,cond:0,hyd:0,act:0,acond:0,ahyd:0,deact:0,decomp:0};
+// steric prefactors per reaction class (relative likelihood the class is attempted at all, before the energetic gate).
+// Four-centre metathesis (dr) is concerted and sterically hindered -> small. Forward/reverse pairs share a value so k_f/k_r is unchanged.
+const STERIC={comb:1.0, sr:0.4, dr:0.03, cond:1.0, hyd:1.0, act:1.0, acond:1.0, ahyd:1.0};
+// Intrinsic (class) activation barriers, added on top of max(0,ΔG). These encode the transition-state chemistry each class must pass through:
+//  - comb: radical recombination, essentially barrierless.
+//  - sr: radical attack / atom abstraction, small barrier.
+//  - dr: CONCERTED FOUR-CENTRE metathesis between two closed-shell molecules — orbital-symmetry forbidden, ~150-250 kJ/mol in reality. Without
+//        this barrier it fires on nearly every collision (it is often the only geometrically available class) and endlessly reshuffles bonds
+//        at constant molecular size, which is exactly why the box could never grow.
+//  - cond/hyd: the uncatalysed water route, kinetically protected (see condBarrier) — this is what makes an amide bond survive in water.
+//  - act/acond/ahyd: the fuel route, low barrier. Fuel makes bond formation FAST while water keeps bond breaking SLOW.
+// Each forward/reverse pair shares one value, so k_f/k_r is untouched and detailed balance still holds by construction.
+function classBarrier(t){if(t==="dr")return drBarrier; if(t==="sr")return 8; if(t==="cond"||t==="hyd")return condBarrier; return 0;}
+let drBarrier=170;
+function rxnReset(){for(const k in RXN)RXN[k]=0;for(const k in RXNG)RXNG[k]=0;}
+// ---------------------------------------------------------------- DB_PROBE_V1
+// Detailed-balance probe: per-class, per-dG-bin accumulator over SAMPLED attempts.
+// See patch_kfkr.py for what it measures. Off unless a driver switches it on.
+const DB={on:false,rate:0.02,bin:25,stepblk:1500,ebin:2,emax:400,acc:new Map(),rng:Math.random};
+// Independent PRNG (mulberry32). The probe must not consume from the main stream,
+// or instrumented runs stop being comparable with production runs.
+function dbSeed(s){let a=(s>>>0)||1;DB.rng=function(){a|=0;a=(a+0x6D2B79F5)|0;
+  let t=Math.imul(a^(a>>>15),1|a);t=(t+Math.imul(t^(t>>>7),61|t))^t;
+  return ((t^(t>>>14))>>>0)/4294967296;};}
+function dbReset(){DB.acc=new Map();}
+const DB_COLS=["n","gF","gR","sPf","sPr","lnMf","lnMr","sdH","sdH2","sdS","sdGsolv","sdGsurf","sEcoll","sT"];
+const DB_HEADER="class,bin_kJ,step_blk,"+DB_COLS.join(",")+"\n";
+// One-sided Metropolis factor, in logs: ln min(1, e^x) = min(0, x).
+const dbLnM=(dH,dS,dGs,dGf,T,sign)=>Math.min(0,sign*dS/8.314)
+   +Math.min(0,-sign*dGs/(R*T))+Math.min(0,-sign*dGf/(R*T));
+function dbRecord(t,dH,dSr,dGs,dGsurf,Ecoll,cb){
+  const T=P.T, dG=dH-T*dSr*1e-3+dGs+dGsurf;
+  const b=Math.round(dG/DB.bin)*DB.bin;
+  // coarse step block: lets the analysis ask whether E_coll stays thermal as the
+  // box fills with large molecules, rather than only early in the run.
+  const sb=Math.floor(steps/DB.stepblk)*DB.stepblk;
+  const k=t+"|"+b+"|"+sb;
+  let e=DB.acc.get(k);
+  if(!e){e={};for(const c of DB_COLS)e[c]=0;DB.acc.set(k,e);}
+  e.n++;
+  // The SAME collision energy is tested against both thresholds: a paired estimator of
+  // the gate ratio, which is where all the empirical content of k_f/k_r lives.
+  const Ef=barrier(dH)+cb, Er=barrier(-dH)+cb;
+  if(Ecoll>=Ef)e.gF++;
+  if(Ecoll>=Er)e.gR++;
+  // Expected counts under the null P(E>=x)=e^{-x/RT}, accumulated PER ATTEMPT. Comparing
+  // gF/gR against sPf/sPr is exact; comparing it against e^{-<dH>/RT} is not, because
+  // <e^{dH/RT}> != e^{<dH>/RT} whenever dH varies inside a bin (Jensen). That bias is of
+  // order var(dH)/2(RT)^2, which at RT ~ 7.5 kJ/mol is larger than any effect worth
+  // measuring.
+  e.sPf+=Math.exp(-Ef/(R*T));
+  e.sPr+=Math.exp(-Er/(R*T));
+  e.lnMf+=dbLnM(dH,dSr,dGs,dGsurf,T,+1);
+  e.lnMr+=dbLnM(dH,dSr,dGs,dGsurf,T,-1);
+  e.sdH+=dH;e.sdH2+=dH*dH;e.sdS+=dSr;e.sdGsolv+=dGs;e.sdGsurf+=dGsurf;e.sEcoll+=Ecoll;e.sT+=T;
+  dbEcoll(Ecoll);
+}
+// Raw collision-energy histogram, stored under a sentinel class so it rides along in the
+// same CSV. The whole residual reduces to a statement about P(E_coll >= x), so this is the
+// complete test, and unlike the per-channel version it covers channels whose reverse
+// threshold is never cleared. Class proposal does not depend on E_coll, so sampling
+// attempts gives an unbiased energy sample.
+function dbEcoll(E){
+  const b=Math.min(Math.floor(E/DB.ebin)*DB.ebin,DB.emax);
+  const sb=Math.floor(steps/DB.stepblk)*DB.stepblk;
+  const k="_ECOLL_|"+b+"|"+sb;
+  let e=DB.acc.get(k);
+  if(!e){e={};for(const c of DB_COLS)e[c]=0;DB.acc.set(k,e);}
+  e.n++;e.sEcoll+=E;e.sT+=P.T;
+}
+function dbRows(){let s=DB_HEADER;
+  for(const [k,e] of DB.acc){const [t,b,sb]=k.split("|");
+    s+=t+","+b+","+sb+","+DB_COLS.map(c=>(Number.isInteger(e[c])?e[c]:e[c].toFixed(6))).join(",")+"\n";}
+  return s;}
+// -------------------------------------------------------------- end DB_PROBE_V1
+
+function maintainFuel(){if(!fuelOn)return;
+  const molE=p=>enthalpy(p.mol)+0.5*p.m*dot(p.v,p.v)+p.Eint;
+  let n=0;for(const p of parts)if(isFuelMol(p.mol))n++;
+  for(let i=n;i<fuelTarget;i++){
+    if(parts.length>=CAP){                                  // at capacity: evict a bath molecule so fuel always gets in (fuel has chemostat priority)
+      let k=-1;for(let j=parts.length-1;j>=0;j--)if(bathFormActive.has(formula(parts[j].mol))){k=j;break;}
+      if(k<0)break; heatBath+=molE(parts[k]);parts.splice(k,1);}
+    const np=mkPart("NH2CN");heatBath-=molE(np);wChem+=molE(np);parts.push(np);}   // fuel in (work supplied)
+  if(wasteOut>0){const drop=new Set();
+    for(let i=0;i<parts.length;i++){const p=parts[i];if(isUreaMol(p.mol)&&Math.random()<wasteOut){drop.add(i);heatBath+=molE(p);wChem-=molE(p);}}
+    if(drop.size)parts=parts.filter((_,i)=>!drop.has(i));}}                          // waste out (closes the driven cycle)
+// reaction acceptance from the entropy change: exp(min(0,ΔS°)/R). Applied to BOTH directions of every reaction so
+// that k_f/k_r = exp(ΔS°/R); combined with the shared-enthalpy transition state this gives detailed balance on ΔG.
+function tryReact(pi,pj,Ecoll){
+  const w=combined([pi,pj]),A=w.atoms,B=w.bonds,nA=pi.mol.atoms.length,nB=A.length-nA;
+  const pick=arr=>arr[(Math.random()*arr.length)|0];
+  // ---- cheap O(n) inventories. We never enumerate the CROSS PRODUCT of sites: the class-weighted
+  // selection below makes P(class) proportional to STERIC[class] and independent of how many instances
+  // that class has, so it is exactly equivalent (and vastly cheaper) to pick the class first and then
+  // sample one instance uniformly. Enumerating all bond pairs made a collision between two 80-carbon
+  // molecules cost ~24 ms; sampling makes it O(atoms).
+  const fI=[],fJ=[];
+  for(let i=0;i<A.length;i++)if(freeInC(A,B,i)>0)(i<nA?fI:fJ).push(i);
+  const bI=[],bJ=[];B.forEach((b,bi)=>{if(b.a<nA&&b.b<nA)bI.push(bi);else if(b.a>=nA&&b.b>=nA)bJ.push(bi);});
+  const ohI=hydroxyls(A,B,0,nA), ohJ=hydroxyls(A,B,nA,A.length), dnI=donors(A,B,0,nA), dnJ=donors(A,B,nA,A.length);
+  const fsI=(nA===5)?nitrileSite(A,B,0,nA):null, fsJ=(nB===5)?nitrileSite(A,B,nA,A.length):null;
+  const isI=isoureaSite(A,B,0,nA), isJ=isoureaSite(A,B,nA,A.length);
+  const uI=(nA===8)?ureaSite(A,B,0,nA):null, uJ=(nB===8)?ureaSite(A,B,nA,A.length):null, us=uI||uJ;
+
+  // ---- which classes are AVAILABLE at all (existence tests, not enumeration) ----
+  const avail=[];
+  // comb is the only class whose validity can actually fail (saturated pair, or an H that already
+  // has its one bond), so enumerate it -- radicals are rare, so fI x fJ is small. Every other class
+  // draws its two partners from the DISJOINT index ranges of molecule I and molecule J, which makes
+  // their "distinct atoms" checks vacuous: sampling can never fail, so no rejection path exists and
+  // the per-class reaction rate is exactly what the steric prefactor says it is.
+  const combOK=(a,b)=>{const o=curOrder(B,a,b);return o<3&&!(VAL[A[a]]===1&&o>=1)&&!(VAL[A[b]]===1&&o>=1);};
+  const combPairs=[];
+  for(const a of fI)for(const b of fJ)if(combOK(a,b))combPairs.push([a,b]);
+  if(combPairs.length)avail.push("comb");
+  if((fI.length&&bJ.length)||(fJ.length&&bI.length))avail.push("sr");
+  if(bI.length&&bJ.length)avail.push("dr");
+  if((ohI.length&&dnJ.length)||(ohJ.length&&dnI.length))avail.push("cond");
+  const wi=isWaterMol(pi.mol), wj=isWaterMol(pj.mol);
+  let wo=-1,wh=-1,glo=0,ghi=0;
+  if(wi!==wj){const wlo=wi?0:nA, whi=wi?nA:A.length; glo=wi?nA:0; ghi=wi?A.length:nA;
+    for(let k=wlo;k<whi;k++)if(A[k]==='O')wo=k;
+    if(wo>=0)for(const b of B){const q=b.a===wo?b.b:(b.b===wo?b.a:-1);if(q>=0&&A[q]==='H'){wh=q;break;}}
+    if(wo>=0&&wh>=0&&B.some(b=>b.o===1&&b.a>=glo&&b.a<ghi&&b.b>=glo&&b.b<ghi&&A[b.a]!=='H'&&A[b.b]!=='H'))avail.push("hyd");}
+  if((fsI&&ohJ.length)||(fsJ&&ohI.length))avail.push("act");
+  if((isI&&dnJ.length)||(isJ&&dnI.length))avail.push("acond");
+  let glo2=0,ghi2=0;
+  if(us){glo2=uI?nA:0; ghi2=uI?A.length:nA;
+    if(B.some(b=>b.o===1&&b.a>=glo2&&b.a<ghi2&&b.b>=glo2&&b.b<ghi2&&A[b.a]!=='H'&&A[b.b]!=='H'))avail.push("ahyd");}
+  if(!avail.length)return null;
+
+  // ---- choose the CLASS with probability proportional to its steric prefactor ----
+  // Four-centre metathesis (dr) is concerted and sterically hindered, so it must not win by sheer
+  // combinatorics. Forward/reverse pairs (cond/hyd, acond/ahyd, act/deact) share a prefactor, so
+  // k_f/k_r is untouched and detailed balance is preserved.
+  let tot=0;for(const t of avail)tot+=(STERIC[t]||1);
+  let r=Math.random()*tot,t=avail[avail.length-1];
+  for(const k of avail){r-=(STERIC[k]||1);if(r<=0){t=k;break;}}
+
+  // ---- sample ONE instance of that class, uniformly, in O(1)-O(n) ----
+  let c=null;
+  if(t==="comb"){const[a,b]=pick(combPairs);c={t:"comb",a,b};}
+  else if(t==="sr"){const optI=fI.length&&bJ.length, optJ=fJ.length&&bI.length;
+    const useI = optI && (!optJ || Math.random()< (fI.length*bJ.length)/(fI.length*bJ.length+fJ.length*bI.length));
+    const a = useI?pick(fI):pick(fJ), bd = B[useI?pick(bJ):pick(bI)];
+    c={t:"sr",A:a,X:bd.a,Y:bd.b};}                       // a and bd are always on opposite molecules
+  else if(t==="dr"){c={t:"dr",b1:B[pick(bI)],b2:B[pick(bJ)]};}   // bI and bJ are intramolecular: always 4 distinct atoms
+  else if(t==="cond"){const optI=ohI.length&&dnJ.length, optJ=ohJ.length&&dnI.length;
+    const useI = optI && (!optJ || Math.random()< (ohI.length*dnJ.length)/(ohI.length*dnJ.length+ohJ.length*dnI.length));
+    const oh = useI?pick(ohI):pick(ohJ), dn = useI?pick(dnJ):pick(dnI);
+    c={t:"cond",oh,dn};}                                  // oh and dn are always on opposite molecules
+  else if(t==="hyd"){const cand=B.filter(b=>b.o===1&&b.a>=glo&&b.a<ghi&&b.b>=glo&&b.b<ghi&&A[b.a]!=='H'&&A[b.b]!=='H');
+    const b=pick(cand); c={t:"hyd",a1:b.a,b1:b.b,wo,wh};}
+  else if(t==="act"){const opts=[];
+    if(fsI&&ohJ.length)opts.push([ohJ,fsI]); if(fsJ&&ohI.length)opts.push([ohI,fsJ]);
+    const[ohs,fc]=pick(opts); c={t:"act",oh:pick(ohs),fc};}
+  else if(t==="acond"){const opts=[];
+    if(isI&&dnJ.length)opts.push([isI,dnJ]); if(isJ&&dnI.length)opts.push([isJ,dnI]);
+    const[iso,dns]=pick(opts); c={t:"acond",iso,dn:pick(dns)};}
+  else {const cand=B.filter(b=>b.o===1&&b.a>=glo2&&b.a<ghi2&&b.b>=glo2&&b.b<ghi2&&A[b.a]!=='H'&&A[b.b]!=='H');
+    const b=pick(cand); c={t:"ahyd",u:us,a1:b.a,x:b.b};}
+  const nb=B.map(b=>({...b}));
+  const brk=(i,j)=>{const b=nb.find(z=>(z.a===i&&z.b===j)||(z.a===j&&z.b===i));if(b){if(b.o>1)b.o--;else nb.splice(nb.indexOf(b),1);}};
+  const frm=(i,j)=>{const b=nb.find(z=>(z.a===i&&z.b===j)||(z.a===j&&z.b===i));if(b)b.o++;else nb.push({a:i,b:j,o:1});};
+  if(c.t==="comb"){frm(c.a,c.b);}
+  else if(c.t==="sr"){brk(c.X,c.Y);frm(c.A,c.X);}
+  else if(c.t==="dr"){const{b1,b2}=c;brk(b1.a,b1.b);brk(b2.a,b2.b);frm(b1.a,b2.b);frm(b2.a,b1.b);}
+  else if(c.t==="cond"){const{oh,dn}=c;brk(oh.a1,oh.o);brk(dn.b1,dn.h2);frm(oh.a1,dn.b1);frm(oh.o,dn.h2);}   // heavy–heavy bond + O gains 2nd H -> water leaves
+  else if(c.t==="hyd"){const{a1,b1,wo,wh}=c;brk(a1,b1);brk(wo,wh);frm(a1,wo);frm(b1,wh);}                    // reverse of cond
+  else if(c.t==="act"){const{oh,fc}=c;brk(oh.o,oh.h);brk(fc.c,fc.nT);frm(oh.o,fc.c);frm(fc.nT,oh.h);}        // O–H and C≡N broken; O–C and N–H formed -> isourea
+  else if(c.t==="acond"){const{iso,dn}=c;brk(iso.a1,iso.o);brk(dn.b1,dn.h2);brk(iso.c,iso.nD);frm(iso.a1,dn.b1);frm(iso.nD,dn.h2);frm(iso.o,iso.c);}  // expels urea
+  else{const{u,a1,x}=c;brk(u.o,u.c);brk(u.nD,u.h);brk(a1,x);frm(a1,u.o);frm(u.c,u.nD);frm(x,u.h);}           // ahyd: exact reverse of acond
+  const prods=components(A,nb);
+  if(prods.some(p=>p.atoms.length>MAXATOMS))return null;   // reject over-size products (perf + aggregation cutoff)
+  // ΔH from the enthalpy function itself, not hand-derived bond bookkeeping. Single source of truth: whatever enthalpy() counts
+  // (bond energies, radical penalties, resonance, ring strain) automatically and exactly enters every reaction's energetics, so
+  // the ledger can never drift from the dynamics and structural terms need no per-reaction algebra.
+  let dH=0;for(const p of prods)dH+=enthalpy(p);dH-=enthalpy(pi.mol)+enthalpy(pj.mol);
+  // DB_PROBE_V1: the free-energy terms are hoisted above the gate so the probe can see
+  // every attempt, not only the ones that clear it. Same values, same tests, same order.
+  const dSr=dSrxnJ([pi.mol,pj.mol],prods);                   // real entropy change of THIS reaction (translational + molecularity)
+  const dGs=solvent?dGsolv([pi.mol,pj.mol],prods):0;          // hydrophobic solvation: burying nonpolar surface favours association, desolvating polar sites opposes it
+  const dGsurf=(mineral&&(c.t==="cond"||c.t==="hyd"))?(c.t==="cond"?-1:1)*condStab*mineralCat:0;   // clay surface: adsorption free energy stabilises the condensed bond
+  if(DB.on&&DB.rng()<DB.rate)dbRecord(c.t,dH,dSr,dGs,dGsurf,Ecoll,classBarrier(c.t));
+  if(Ecoll<barrier(dH)+classBarrier(c.t))return null;         // enthalpic gate: max(0,ΔG) + the class's intrinsic transition-state barrier
+  if(Math.random()>Math.exp(Math.min(0,dSr)/8.314))return null;  // entropy factor -> detailed balance on ΔG, not just ΔH
+  if(solvent&&Math.random()>Math.exp(Math.min(0,-dGs)/(R*P.T)))return null;  // detailed balance on ΔG_solv
+  if(dGsurf!==0&&Math.random()>Math.exp(Math.min(0,-dGsurf)/(R*P.T)))return null;  // shifts the cond/hyd equilibrium WITHOUT touching the released enthalpy
+  return {prods,dH,dG:dH-P.T*dSr*1e-3,t:c.t};   // dG of THIS event (standard-state); dSr already computed above
+}
+// conserve 3D momentum + energy across products
+function place(reactants,prods,dH,center){
+  let px=0,py=0,pz=0,M=0,keLab=0,eint=0;
+  for(const p of reactants){px+=p.m*p.v.x;py+=p.m*p.v.y;pz+=p.m*p.v.z;M+=p.m;keLab+=0.5*p.m*dot(p.v,p.v);eint+=p.Eint;}
+  const vc=v3(px/M,py/M,pz/M);const keCom=keLab-0.5*M*dot(vc,vc);const pool=keCom+eint-dH;
+  const out=[];
+  const mk=(mol,pp,vv,ei)=>({mol,p:pp,v:vv,q:randQuat(),w:scl(randUnit(),0.6+Math.random()),Eint:Math.max(0,ei),r:molRadius(mol),m:molMass(mol)});
+  if(prods.length===1){out.push(mk(prods[0],v3(center.x,center.y,center.z),vc,pool));}
+  else{const A=prods[0],Bm=prods[1],mA=molMass(A),mB=molMass(Bm),mu=mA*mB/(mA+mB);
+    const f=0.25+0.5*Math.random();const ke=Math.max(0,pool)*f;const g=Math.sqrt(2*ke/mu);const u=randUnit();
+    out.push(mk(A,add(center,scl(u,A.r?4:4)),add(vc,scl(u,g*mB/M)),Math.max(0,pool)*(1-f)*0.5));
+    out.push(mk(Bm,add(center,scl(u,-4)),add(vc,scl(u,-g*mA/M)),Math.max(0,pool)*(1-f)*0.5));
+    for(let k=2;k<prods.length;k++)out.push(mk(prods[k],add(center,scl(randUnit(),3)),vc,0));
+  }
+  for(const o of out)wrap(o); return out;
+}
+function elastic(pi,pj,n){const vn=dot(sub(pi.v,pj.v),n);if(vn>0)return;const M=pi.m+pj.m,imp=2*vn/M;
+  pi.v=sub(pi.v,scl(n,imp*pj.m));pj.v=add(pj.v,scl(n,imp*pi.m));}
+function dischargeStep(){if(Math.random()>dischargeRate)return;      // lightning strike: concentrates thermal energy into a few molecules
+  const cands=[];for(let i=0;i<parts.length;i++)if(parts[i].mol.atoms.includes("N")&&parts[i].mol.bonds.length)cands.push(i);   // preferentially where it can crack N≡N
+  const pool=cands.length?cands:parts.map((_,i)=>i);if(!pool.length)return;
+  const hits=1+((Math.random()*3)|0);
+  for(let h=0;h<hits;h++){const i=pool[(Math.random()*pool.length)|0];parts[i].Eint+=dischargeE;heatBath-=dischargeE;}   // energy from the environment (bath)
+}
+// unimolecular reverse of activation: –O–C(=NH)NH2 -> –OH + N≡C–NH2. Without this, activation would be irreversible and detailed
+// balance would break by construction. Same barrier(ΔG) transition state, with ΔH exactly the negative of the activation step.
+function deactStep(){const born=[],dead=new Set();
+  for(let i=0;i<parts.length;i++){const p=parts[i],m=p.mol;if(m.atoms.length<6)continue;
+    const s=isoureaSite(m.atoms,m.bonds,0,m.atoms.length);if(!s)continue;
+    let h=-1;for(const b of m.bonds){const q=b.a===s.nD?b.b:(b.b===s.nD?b.a:-1);if(q>=0&&m.atoms[q]==='H'){h=q;break;}}
+    if(h<0)continue;
+    const nb=m.bonds.map(b=>({...b}));
+    const brk=(u,v)=>{const b=nb.find(z=>(z.a===u&&z.b===v)||(z.a===v&&z.b===u));if(b){if(b.o>1)b.o--;else nb.splice(nb.indexOf(b),1);}};
+    const frm=(u,v)=>{const b=nb.find(z=>(z.a===u&&z.b===v)||(z.a===v&&z.b===u));if(b)b.o++;else nb.push({a:u,b:v,o:1});};
+    brk(s.o,s.c);brk(s.nD,h);frm(s.c,s.nD);frm(s.o,h);
+    const prods=components(m.atoms,nb);if(prods.length<2)continue;
+    let dH=0;for(const q of prods)dH+=enthalpy(q);dH-=enthalpy(m);          // exact reverse of act, by construction
+    if(p.Eint<barrier(dH))continue; if(Math.random()>0.03)continue;
+    dead.add(i);RXN.deact++;RXNG.deact+=dH-P.T*dSrxnJ([m],prods)*1e-3;for(const q of place([p],prods,dH,p.p))born.push(q);}
+  if(dead.size)parts=parts.filter((_,i)=>!dead.has(i)).concat(born);}
+function decompose(){const born=[],dead=new Set();
+  for(let idx=0;idx<parts.length;idx++){const p=parts[idx];if(!p.mol.bonds.length||p.Eint<50)continue;if(Math.random()>0.04*(mineral?1-mineralCat*0.6:1))continue;   // mineral surface stabilises (protects) products
+    const bi=(Math.random()*p.mol.bonds.length)|0,b=p.mol.bonds[bi];
+    const nb=p.mol.bonds.map(x=>({...x}));if(b.o>1)nb[bi].o--;else nb.splice(bi,1);
+    const prods=components(p.mol.atoms,nb);if(prods.length<2&&nb.length===p.mol.bonds.length)continue;
+    let dH=0;for(const q of prods)dH+=enthalpy(q);dH-=enthalpy(p.mol);      // same single source of truth as tryReact
+    if(p.Eint<barrier(dH))continue;
+    const dSr=dSrxnJ([p.mol],prods);
+    if(Math.random()>Math.exp(Math.min(0,dSr)/8.314))continue;   // same entropy factor for the reverse direction (usually 1: dissociation gains entropy)
+    if(solvent){const dGs=dGsolv([p.mol],prods);                 // solvation on bond breaking: exposing buried nonpolar surface to water is unfavourable
+      if(Math.random()>Math.exp(Math.min(0,-dGs)/(R*P.T)))continue;}
+    dead.add(idx);RXN.decomp++;RXNG.decomp+=dH-P.T*dSr*1e-3;born.push(...place([p],prods,dH,p.p));}
+  if(dead.size)parts=parts.filter((_,i)=>!dead.has(i)).concat(born);
+}
+
+// ---------- telescopic selection epochs (renormalisation) ----------
+// When the foreground settles into stable, larger molecules (a plateau in mean size), the most abundant species are
+// PROMOTED into the maintained background: held at their concentration like feedstock, and dropped from the foreground
+// statistics/plots. The next level of complexity then assembles on top of them. Each epoch coarse-grains the settled
+// species into the new primitives — a telescopic view, echoing Assembly Theory's recursive construction from prior parts.
+let epochOn=false, epochKeep=6, epochCount=0, lastEpochStep=-1, epochMinGap=1500, epochPlateau=0.03;
+let promoted=new Map();                                  // canon -> {mol, target, form}
+let promotedCanon=new Set(), promotedForm=new Set(), msizeHist=[];
+function refreshPromoted(){promotedCanon=new Set(promoted.keys());promotedForm=new Set([...promoted.values()].map(v=>v.form));}
+function mkPartFromMol(mol){const m=mkMol(mol.atoms,mol.bonds),mass=molMass(m);
+  return {mol:m,p:v3(Math.random()*L,Math.random()*L,Math.random()*L),v:mbVel(mass),q:randQuat(),w:scl(randUnit(),0.6+Math.random()),Eint:0,r:molRadius(m),m:mass,bg:true};}
+function foregroundCensus(){const cnt=new Map();
+  for(const p of parts){const f=formula(p.mol);if(bathFormActive.has(f))continue;const k=canon(p.mol);if(promotedCanon.has(k))continue;
+    let e=cnt.get(k);if(!e){e={n:0,mol:p.mol,form:f};cnt.set(k,e);}e.n++;}
+  return cnt;}
+function runEpoch(){
+  const cnt=foregroundCensus();if(!cnt.size)return;
+  const ranked=[...cnt.entries()].sort((a,b)=>b[1].n-a[1].n).slice(0,epochKeep);
+  for(const [k,e] of ranked){if(e.n<3)continue;                        // promote only genuinely abundant species
+    promoted.set(k,{mol:e.mol,target:e.n,form:e.form});}
+  refreshPromoted();epochCount++;lastEpochStep=steps;msizeHist=[];
+}
+function maintainPromoted(){if(!promoted.size)return;                   // chemostat: hold promoted species at their concentration
+  const molE=p=>enthalpy(p.mol)+0.5*p.m*dot(p.v,p.v)+p.Eint;           // total energy a molecule carries across the reservoir boundary
+  const cnt=new Map();for(const p of parts){const k=canon(p.mol);if(promotedCanon.has(k))cnt.set(k,(cnt.get(k)||0)+1);}
+  for(const [k,info] of promoted){const add=info.target-(cnt.get(k)||0);
+    for(let i=0;i<add&&parts.length<CAP;i++){const np=mkPartFromMol(info.mol);
+      heatBath-=molE(np);wChem+=molE(np);parts.push(np);}}                // promoted species are a chemostat like any other: the energy they
+}                                                                        // bring in MUST be debited from the bath, or the ledger invents energy.
+function epochCheck(){                                                  // physical trigger: fire on a plateau in foreground mean size
+  const c=foregroundCensus();let n=0,sa=0;for(const e of c.values()){n+=e.n;sa+=e.mol.atoms.length*e.n;}
+  msizeHist.push(n?sa/n:0);if(msizeHist.length>12)msizeHist.shift();
+  if(!epochOn||msizeHist.length<8||steps-lastEpochStep<epochMinGap)return;
+  const a=msizeHist.slice(0,4).reduce((x,y)=>x+y,0)/4, b=msizeHist.slice(-4).reduce((x,y)=>x+y,0)/4;
+  if(Math.abs(b-a)/Math.max(1,a)<epochPlateau)runEpoch();              // settled -> telescope
+}
+function step(dt){
+  if(autoTherm)P.T=tLow+(tHigh-tLow)*(0.5-0.5*Math.cos(2*Math.PI*simTime/tPeriod));   // prebiotic thermal cycle
+  if(wetdry){dryness=0.5-0.5*Math.cos(2*Math.PI*simTime/dryPeriod);                    // 0 = wet, 1 = dry
+    const Lt=Lbase*Math.cbrt(1-dryness*0.55);                                          // drying shrinks the pool -> concentrates solutes
+    if(Math.abs(Lt-L)>1e-9){const sc=Lt/L;for(const p of parts){p.p.x*=sc;p.p.y*=sc;p.p.z*=sc;}L=Lt;}}
+  else if(L!==Lbase){const sc=Lbase/L;for(const p of parts){p.p.x*=sc;p.p.y*=sc;p.p.z*=sc;}L=Lbase;dryness=0;}
+  for(const p of parts){p.p=add(p.p,scl(p.v,dt));wrap(p);const wq=[0,p.w.x,p.w.y,p.w.z];p.q=qNorm([p.q[0]+0.5*dt*qMul(p.q,wq)[0],p.q[1]+0.5*dt*qMul(p.q,wq)[1],p.q[2]+0.5*dt*qMul(p.q,wq)[2],p.q[3]+0.5*dt*qMul(p.q,wq)[3]]);}
+  if(P.thermo){
+    if(solvent){                                                // Langevin (implicit solvent): drag + thermal noise -> diffusive motion, thermostatted to T
+      const c1=Math.exp(-gammaFric*dt), c2=Math.sqrt(Math.max(0,1-c1*c1));
+      for(const p of parts){const k0=0.5*p.m*dot(p.v,p.v);p.v=add(scl(p.v,c1),scl(mbVel(p.m),c2));heatBath-=0.5*p.m*dot(p.v,p.v)-k0;const rel=p.Eint*0.02;heatBath+=rel;p.Eint-=rel;}
+    } else {                                                    // Andersen (gas phase): occasional full velocity resample
+      const coup=0.02;for(const p of parts){if(Math.random()<coup){const k0=0.5*p.m*dot(p.v,p.v);p.v=mbVel(p.m);heatBath-=0.5*p.m*dot(p.v,p.v)-k0;}const rel=p.Eint*0.02;heatBath+=rel;p.Eint-=rel;}
     }
-    while(sim.mols.length<P.minPop){var rsp=sim.species[Math.floor(Math.random()*Math.min(P.initialSpecies,sim.species.length))];if(sim.reservoir>=rsp.mass){sim.reservoir-=rsp.mass;sim.mols.push(mkMol(sim.nid++,rsp.id,rsp.freqs,rsp.mass));}else break;}
-    m=sim.mols;
   }
-  if(sim.step%P.csvInterval<P.simSpeed){var c={};for(var i=0;i<sim.mols.length;i++)c[sim.mols[i].speciesId]=(c[sim.mols[i].speciesId]||0)+1;popHistory.push({step:sim.step,counts:c});if(popHistory.length>400)popHistory.shift();csvData.push({step:sim.step,counts:Object.assign({},c)});
-    // Reaction-rate + autocatalyst history for the diagnostic panels.
-    var nAuto=0;for(var i=0;i<sim.species.length;i++)if(sim.species[i].autocat)nAuto++;
-    sim.rxnHist.push({step:sim.step,fwd:sim.fwdRxn,rev:sim.revRxn,auto:sim.autoRxn,nAuto:nAuto});
-    if(sim.rxnHist.length>400)sim.rxnHist.shift();
-  }
+  const maxR=Math.max(...parts.map(p=>p.r),6);
+  const cs=Math.max(8,Math.min(2*maxR,L/4)),nc=Math.max(1,Math.floor(L/cs)),grid=new Map();
+  const key=(a,b,c)=>(((a%nc+nc)%nc)*nc+((b%nc+nc)%nc))*nc+((c%nc+nc)%nc);
+  parts.forEach((p,i)=>{const k=key(Math.floor(p.p.x/cs),Math.floor(p.p.y/cs),Math.floor(p.p.z/cs));(grid.get(k)||grid.set(k,[]).get(k)).push(i);});
+  const born=[],dead=new Set(),giant=parts.map(p=>p.r>cs);
+  const collide=(i,j)=>{if(i===j||dead.has(i)||dead.has(j))return;const pi=parts[i],pj=parts[j];
+    const d=v3(mi(pj.p.x-pi.p.x),mi(pj.p.y-pi.p.y),mi(pj.p.z-pi.p.z));const d2=dot(d,d),rr=pi.r+pj.r;if(d2>rr*rr||d2<1e-6)return;
+    const dl=Math.sqrt(d2),nrm=scl(d,1/dl);const vn=dot(sub(pj.v,pi.v),nrm);if(vn>=0)return;
+    const mu=pi.m*pj.m/(pi.m+pj.m),Ecoll=0.5*mu*vn*vn;const res=tryReact(pi,pj,Ecoll);
+    if(res){RXN[res.t]=(RXN[res.t]||0)+1;RXNG[res.t]=(RXNG[res.t]||0)+res.dG;const ctr=v3(((pi.p.x+d.x*0.5)%L+L)%L,((pi.p.y+d.y*0.5)%L+L)%L,((pi.p.z+d.z*0.5)%L+L)%L);dead.add(i);dead.add(j);born.push(...place([pi,pj],res.prods,res.dH,ctr));}
+    else elastic(pi,pj,nrm);};
+  // neighbour-cell pairs (both molecules fit inside a cell)
+  parts.forEach((pi,i)=>{if(dead.has(i)||giant[i])return;const cx=Math.floor(pi.p.x/cs),cy=Math.floor(pi.p.y/cs),cz=Math.floor(pi.p.z/cs);
+    for(let ax=-1;ax<=1;ax++)for(let ay=-1;ay<=1;ay++)for(let az=-1;az<=1;az++){const cell=grid.get(key(cx+ax,cy+ay,cz+az));if(!cell)continue;
+      for(const j of cell){if(j<=i||giant[j])continue;collide(i,j);}}});
+  // rare molecules larger than a cell span multiple cells: test them against all others directly
+  for(let i=0;i<parts.length;i++){if(!giant[i])continue;for(let j=0;j<parts.length;j++){if(j===i)continue;if(giant[j]&&j<i)continue;collide(i,j);}}
+  if(dead.size)parts=parts.filter((_,i)=>!dead.has(i)).concat(born);
+  if(P.thermo&&discharge)dischargeStep();
+  deactStep();
+  decompose();steps++;simTime+=dt;
+  if(steps%20===0){maintainBath();maintainFuel();maintainPromoted();}
+  if(steps%100===0)epochCheck();
 }
 
-function exportCSV(){
-  if(!csvData.length){alert("No data yet.");return;}
-  var allIds={};for(var i=0;i<csvData.length;i++)for(var k in csvData[i].counts)allIds[k]=true;
-  var ids=Object.keys(allIds).map(Number).sort(function(a,b){return a-b;});
-  var header=["step"];for(var i=0;i<ids.length;i++){var sp=null;for(var j=0;j<sim.species.length;j++)if(sim.species[j].id===ids[i]){sp=sim.species[j];break;}header.push(sp?(sp.name+"_id"+sp.id+"_["+sp.freqs.join(";")+"]"):("Sp-"+ids[i]));}
-  var lines=[header.join(",")];for(var r=0;r<csvData.length;r++){var row=[csvData[r].step];for(var i=0;i<ids.length;i++)row.push(csvData[r].counts[ids[i]]||0);lines.push(row.join(","));}
-  var blob=new Blob([lines.join("\n")],{type:"text/csv"});var a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download="fimd_population_step"+sim.step+".csv";a.click();
+// ---------- ledger ----------
+function ledger(){
+  let Uall=0,KE=0,EI=0,U=0,Gs=0,Nprod=0,sumA=0,maxA=0;
+  const spec=new Map();
+  for(const p of parts){
+    const e=enthalpy(p.mol); Uall+=e; KE+=0.5*p.m*dot(p.v,p.v); EI+=p.Eint;
+    if(bathFormActive.has(formula(p.mol))) continue;    // bath species excluded (cheap formula check)
+    if(fuelOn&&(isFuelMol(p.mol)||isUreaMol(p.mol))) continue;   // chemostatted fuel and its waste are reservoir species, not products
+    const k=canon(p.mol);
+    if(promotedCanon.has(k)) continue;                  // promoted species are background now — excluded from the foreground view
+    U+=e; if(solvent)Gs+=Gsolv(p.mol); Nprod++; const na=p.mol.atoms.length; sumA+=na; if(na>maxA)maxA=na;
+    const s=spec.get(k)||{n:0,rep:p.mol}; s.n++; spec.set(k,s);
+  }
+  const Nall=parts.length, N=Nprod||1;
+  // Solution entropy, consistent with the entropy the dynamics actually use (SstdJ), not the ideal-gas Sackur-Tetrode.
+  // S = Σ nᵢ S°(mᵢ)  (standard-state entropy per species, the same S° that gates every reaction)  +  R·N·H  (ideal mixing / configurational entropy, H = Shannon diversity).
+  let Sstd=0,Sdiv=0,single=0;
+  for(const s of spec.values()){const ns=s.n; Sstd+=ns*SstdJ(s.rep);
+    const pr=ns/N; Sdiv-=pr*Math.log(pr); if(ns===1)single++;}
+  const S=Sstd*1e-3 + R*N*Sdiv;                          // kJ/K (extensive): standard-state + mixing, the condensed-phase entropy
+  const Tmeas=Nall?2*KE/(3*Nall*R):0;
+  // Helmholtz free energy F = U_tot − T·S. U_tot = chemical bond energy + translational thermal (3/2)NRT + solvation free energy;
+  // S is now the solution entropy above (much smaller translational part than an ideal gas — molecules are caged, not free-flying).
+  const Utrans=1.5*R*P.T*Nprod, Utot=U+Utrans+Gs;
+  return {N:Nprod, Nall, bath:Nall-Nprod, U, Utot, Gs, KE, EI, Etot:Uall+KE+EI+heatBath, Tmeas,
+    species:spec.size, spec, S, S_div:R*Sdiv, F:Utot-P.T*S, single, meanA:Nprod?sumA/Nprod:0, maxA};
 }
 
-// ===================== TREE OF LIFE =====================
+// ---------- rendering (3D projection) ----------
+const $=id=>document.getElementById(id);
+const box=$("box");let BW=0,BH=0,az=0.6,el=0.35,autoRot=true,zoom=2.4,viewSlab=0.4;
+function fit(){const dpr=devicePixelRatio||1,r=box.getBoundingClientRect();BW=r.width;BH=r.height;box.width=BW*dpr;box.height=BH*dpr;box.getContext("2d").setTransform(dpr,0,0,dpr,0,0);}
+function accent(){return getComputedStyle(document.body).getPropertyValue('--accent').trim();}
+function project(wx,wy,wz){ // world (centered at L/2) -> screen; returns {x,y,depth,scale}
+  let x=wx-L/2,y=wy-L/2,z=wz-L/2;
+  const ca=Math.cos(az),sa=Math.sin(az);let X=x*ca- z*sa, Z=x*sa+z*ca;
+  const ce=Math.cos(el),se=Math.sin(el);let Y=y*ce-Z*se, Zd=y*se+Z*ce;
+  const foc=L*1.25*zoom, cam=L*1.6; const dep=cam-Zd; const s=foc/Math.max(1,dep);
+  return {x:BW/2+X*s, y:BH/2+Y*s, depth:dep, scale:s, zc:Zd};
+}
+function drawBox(){
+  const g=box.getContext("2d");g.clearRect(0,0,BW,BH);
+  // cube wireframe
+  const c=[[0,0,0],[L,0,0],[L,L,0],[0,L,0],[0,0,L],[L,0,L],[L,L,L],[0,L,L]].map(p=>project(p[0],p[1],p[2]));
+  const E=[[0,1],[1,2],[2,3],[3,0],[4,5],[5,6],[6,7],[7,4],[0,4],[1,5],[2,6],[3,7]];
+  g.strokeStyle="#1c2530";g.lineWidth=1;for(const[a,b]of E){g.beginPath();g.moveTo(c[a].x,c[a].y);g.lineTo(c[b].x,c[b].y);g.stroke();}
+  // molecules, depth-sorted back to front; optional central-slab clip so the 3D projection isn't overcrowded
+  const half=viewSlab*L/2, clip=viewSlab<0.999;
+  const order=parts.map((p,i)=>({i,d:project(p.p.x,p.p.y,p.p.z).depth})).sort((a,b)=>b.d-a.d);
+  for(const {i} of order){const p=parts[i];
+    const cen=project(p.p.x,p.p.y,p.p.z);
+    if(clip&&Math.abs(cen.zc)>half)continue;                 // only render the central slice facing the camera
+    const geo=geometry(p.mol);const scr=Math.max(1.2,cen.scale);
+    if(geo.length===1 || scr*p.r<7){ // LOD: single dot
+      const el0=p.mol.atoms[0]; g.fillStyle=COL[el0]||"#888"; g.globalAlpha=Math.min(1,cen.scale*1.4);
+      g.beginPath();g.arc(cen.x,cen.y,Math.max(1.3,scr*RAD[el0]*GEO*0.5),0,7);g.fill();g.globalAlpha=1;continue;}
+    // full ball-and-stick with orientation
+    const ap=geo.map(gp=>{const wpt=qRot(p.q,scl(gp,GEO));return project(p.p.x+wpt.x,p.p.y+wpt.y,p.p.z+wpt.z);});
+    const shade=Math.max(0.35,Math.min(1,cen.scale*1.3));
+    g.lineCap="round";
+    for(const b of p.mol.bonds){for(let o=0;o<b.o;o++){const off=(o-(b.o-1)/2)*2.4;
+      const dx=ap[b.b].y-ap[b.a].y,dy=ap[b.a].x-ap[b.b].x,dl=Math.hypot(dx,dy)||1;
+      g.strokeStyle=`rgba(120,132,146,${shade})`;g.lineWidth=Math.max(1,scr*0.25);g.beginPath();
+      g.moveTo(ap[b.a].x+off*dx/dl,ap[b.a].y+off*dy/dl);g.lineTo(ap[b.b].x+off*dx/dl,ap[b.b].y+off*dy/dl);g.stroke();}}
+    const ord=geo.map((gp,k)=>({k,z:qRot(p.q,scl(gp,GEO)).z})).sort((a,b)=>a.z-b.z);
+    for(const {k} of ord){const el0=p.mol.atoms[k];const rr=Math.max(1.4,scr*RAD[el0]*GEO*0.62);
+      const col=COL[el0]; g.globalAlpha=shade;g.fillStyle=col;g.beginPath();g.arc(ap[k].x,ap[k].y,rr,0,7);g.fill();
+      g.globalAlpha=shade*0.5;g.fillStyle="#fff";g.beginPath();g.arc(ap[k].x-rr*0.3,ap[k].y-rr*0.3,rr*0.35,0,7);g.fill();g.globalAlpha=1;}
+  }
+}
+function drawMolThumb(g,m,cx,cy,scale){const geo=geometry(m);const q=[1,0,0,0];
+  const ap=geo.map(gp=>{const r=qRot(q,gp);return[cx+r.x*scale,cy+r.y*scale];});
+  g.lineCap="round";
+  for(const b of m.bonds)for(let o=0;o<b.o;o++){const off=(o-(b.o-1)/2)*2;const dx=ap[b.b][1]-ap[b.a][1],dy=ap[b.a][0]-ap[b.b][0],dl=Math.hypot(dx,dy)||1;
+    g.strokeStyle="#6a7684";g.lineWidth=1.3;g.beginPath();g.moveTo(ap[b.a][0]+off*dx/dl,ap[b.a][1]+off*dy/dl);g.lineTo(ap[b.b][0]+off*dx/dl,ap[b.b][1]+off*dy/dl);g.stroke();}
+  const ord=geo.map((gp,k)=>({k,z:gp.z})).sort((a,b)=>a.z-b.z);
+  for(const {k} of ord){const el0=m.atoms[k];g.fillStyle=COL[el0];const rr=el0==="H"?Math.max(1.4,scale*0.4):Math.max(2,scale*0.58);g.beginPath();g.arc(ap[k][0],ap[k][1],rr,0,7);g.fill();}
+}
+// longest carbon-carbon chain in a molecule (# carbons on the longest path; tree-diameter via double BFS)
+function longestCChain(m){
+  const isC=i=>m.atoms[i]==="C";const carbons=[];for(let i=0;i<m.atoms.length;i++)if(isC(i))carbons.push(i);
+  if(!carbons.length)return 0;
+  const adj=new Map();carbons.forEach(i=>adj.set(i,[]));
+  for(const b of m.bonds)if(isC(b.a)&&isC(b.b)){adj.get(b.a).push(b.b);adj.get(b.b).push(b.a);}
+  const bfs=s=>{const dist=new Map([[s,1]]);const q=[s];let far=s,fd=1;
+    while(q.length){const u=q.shift();for(const v of adj.get(u))if(!dist.has(v)){const d=dist.get(u)+1;dist.set(v,d);if(d>fd){fd=d;far=v;}q.push(v);}}return{far,fd};};
+  let best=1;const seen=new Set();
+  for(const c of carbons){if(seen.has(c))continue;const q=[c];seen.add(c);while(q.length){const u=q.shift();for(const v of adj.get(u))if(!seen.has(v)){seen.add(v);q.push(v);}}
+    best=Math.max(best,bfs(bfs(c).far).fd);}
+  return best;
+}
+// amino-acid-like: molecule bearing BOTH an amine (N-C single bond, N has H) and a carboxyl (C with =O and -O-H)
+function aminoAcidLike(m){
+  const adj=m.atoms.map(()=>[]);
+  for(const b of m.bonds){adj[b.a].push({j:b.b,o:b.o});adj[b.b].push({j:b.a,o:b.o});}
+  const hasH=i=>adj[i].some(x=>m.atoms[x.j]==="H");
+  let carboxyl=false, amine=false;
+  for(let i=0;i<m.atoms.length;i++){const e=m.atoms[i];
+    if(e==="C"){const on=adj[i].filter(x=>m.atoms[x.j]==="O");
+      if(on.some(x=>x.o===2)&&on.some(x=>x.o===1&&hasH(x.j)))carboxyl=true;}
+    else if(e==="N"){if(adj[i].some(x=>m.atoms[x.j]==="C"&&x.o===1)&&hasH(i))amine=true;}}
+  return carboxyl&&amine;
+}
+function drawAmino(){
+  const L2=ledger();let best=null,bn=0,ba=0;
+  for(const s of L2.spec.values()){if(!aminoAcidLike(s.rep))continue;const na=s.rep.atoms.length;if(s.n>bn||(s.n===bn&&na>ba)){best=s;bn=s.n;ba=na;}}
+  const host=$("amino");if(!host)return;
+  if(!best){host.innerHTML='<div class="note" style="margin:0">none yet — needs an amine (N–C, with H) and a carboxyl (–COOH) on one molecule</div>';return;}
+  const na=best.rep.atoms.length,bonds=best.rep.bonds.reduce((a,b)=>a+b.o,0),gly=formula(best.rep)==="C2H5NO2";
+  const g=geometry(best.rep);let mx=0.6;for(const p of g)mx=Math.max(mx,Math.hypot(p.x,p.y));
+  const half=30,sc=Math.min(10,(half-6)/mx);
+  host.innerHTML="";const row=document.createElement("div");row.className="sp";
+  const cv=document.createElement("canvas");cv.width=half*2;cv.height=half*2;cv.style.width="60px";cv.style.height="60px";
+  drawMolThumb(cv.getContext("2d"),best.rep,half,half,sc);row.appendChild(cv);
+  const info=document.createElement("div");info.style.flex="1";
+  info.innerHTML=`<div class="f mono">${formula(best.rep).replace(/(\d+)/g,"<sub>$1</sub>")}${gly?' <span style="opacity:.6">glycine</span>':''}</div>`+
+    `<div class="n mono">–NH + –COOH · ${na} atoms · ${bonds} bonds · ×${best.n}</div>`;
+  row.appendChild(info);host.appendChild(row);
+}
+function drawBigChain(){
+  const L2=ledger();let best=null,bc=0,ba=0;
+  for(const s of L2.spec.values()){if(!s.rep.atoms.includes("C"))continue;const ch=longestCChain(s.rep),na=s.rep.atoms.length;
+    if(ch>bc||(ch===bc&&na>ba)){best=s;bc=ch;ba=na;}}
+  const host=$("bigchain");if(!host)return;
+  if(!best){host.innerHTML='<div class="note" style="margin:0">no carbon products yet — run to build some</div>';return;}
+  const nC=best.rep.atoms.filter(e=>e==="C").length, na=best.rep.atoms.length, bonds=best.rep.bonds.reduce((a,b)=>a+b.o,0);
+  const g=geometry(best.rep);let mx=0.6;for(const p of g)mx=Math.max(mx,Math.hypot(p.x,p.y));
+  const half=30, sc=Math.min(10,(half-6)/mx);
+  host.innerHTML="";const row=document.createElement("div");row.className="sp";
+  const cv=document.createElement("canvas");cv.width=half*2;cv.height=half*2;cv.style.width="60px";cv.style.height="60px";
+  drawMolThumb(cv.getContext("2d"),best.rep,half,half,sc);row.appendChild(cv);
+  const info=document.createElement("div");info.style.flex="1";
+  info.innerHTML=`<div class="f mono">${formula(best.rep).replace(/(\d+)/g,"<sub>$1</sub>")}</div>`+
+    `<div class="n mono">chain C${bc} · ${nC} C · ${na} atoms · ${bonds} bonds · ×${best.n}</div>`;
+  row.appendChild(info);host.appendChild(row);
+}
+function drawLedger(){const L2=ledger();
+  const cells=[["products",L2.N,""],["bath",L2.bath,""],["species",L2.species,""],["singletons",L2.single,""],["mean atoms",L2.meanA.toFixed(2),""],["largest",L2.maxA,"at"],
+    ["T meas",L2.Tmeas.toFixed(0),"K"],["U chem",L2.U.toFixed(0),"kJ"],["E int",L2.EI.toFixed(0),"kJ"],["F",L2.F.toFixed(0),"kJ"]];
+  $("ledger").innerHTML=cells.map(([k,v,u])=>`<div class="cell"><div class="k">${k}</div><div class="v mono">${v}<span class="u">${u}</span></div></div>`).join("");
+  document.body.classList.toggle("hot",L2.Tmeas>1600);}
+function drawSpecies(){const L2=ledger();const top=[...L2.spec.entries()].sort((a,b)=>b[1].n-a[1].n).slice(0,9);const max=top[0]?top[0][1].n:1;
+  const host=$("species");host.innerHTML="";
+  for(const[k,e]of top){const row=document.createElement("div");row.className="sp";
+    const cv=document.createElement("canvas");cv.width=40;cv.height=40;drawMolThumb(cv.getContext("2d"),e.rep,20,20,7);row.appendChild(cv);
+    const info=document.createElement("div");info.style.flex="1";
+    info.innerHTML=`<div class="f mono">${formula(e.rep).replace(/(\d+)/g,"<sub>$1</sub>")}</div><div class="n mono">×${e.n}</div><div class="bar"><i style="width:${100*e.n/max}%"></i></div>`;
+    row.appendChild(info);host.appendChild(row);}
+  const total=L2.N||1,inMulti=[...L2.spec.values()].filter(s=>s.n>1).reduce((a,s)=>a+s.n,0);
+  $("cndist").textContent=`copy≥2 species hold ${(100*inMulti/total).toFixed(0)}% of products · ${L2.single} singletons of ${L2.species} · bath ${L2.bath} excluded`;
+}
+// ---- bottom physical plots ----
+function pcanvas(cv){const dpr=devicePixelRatio||1,w=cv.clientWidth||300,h=cv.clientHeight||150;cv.width=w*dpr;cv.height=h*dpr;const g=cv.getContext("2d");g.setTransform(dpr,0,0,dpr,0,0);g.clearRect(0,0,w,h);return{g,w,h};}
+function emptyMsg(g){g.fillStyle="#586675";g.font="10px ui-monospace,monospace";g.fillText("run to populate",8,16);}
+function tsLine(g,arr,n,x,ymap,col){g.strokeStyle=col;g.lineWidth=1.5;g.beginPath();for(let i=0;i<n;i++){const xx=x(i),yy=ymap(arr[i]);i?g.lineTo(xx,yy):g.moveTo(xx,yy);}g.stroke();}
+function drawThermo(){const {g,w,h}=pcanvas($("pThermo"));const n=hist.F.length;if(n<2){emptyMsg(g);return;}
+  const pL=46,pR=12,pT=14,pB=12,pw=w-pL-pR,ph=h-pT-pB;
+  const Lv=hist.u.concat(hist.F);let lmin=Math.min(...Lv),lmax=Math.max(...Lv);if(lmin===lmax){lmin--;lmax++;}const lp=(lmax-lmin)*.08;
+  const yl=v=>pT+ph-(v-(lmin-lp))/((lmax+lp)-(lmin-lp))*ph, x=i=>pL+i/(n-1)*pw;
+  g.strokeStyle="#1c2530";for(let k=0;k<=3;k++){const y=pT+ph*k/3;g.beginPath();g.moveTo(pL,y);g.lineTo(pL+pw,y);g.stroke();}
+  // shade the band between U and F: that vertical gap IS T·S (same axis, so F = U - T·S is verifiable by eye)
+  g.beginPath();g.moveTo(x(0),yl(hist.u[0]));for(let i=1;i<n;i++)g.lineTo(x(i),yl(hist.u[i]));
+  for(let i=n-1;i>=0;i--)g.lineTo(x(i),yl(hist.F[i]));g.closePath();g.fillStyle="rgba(105,192,138,0.16)";g.fill();
+  tsLine(g,hist.u,n,x,yl,"#5a6b7a"); tsLine(g,hist.F,n,x,yl,accent());
+  g.font="9px ui-monospace,monospace";g.fillStyle=accent();g.fillText("F",pL+2,pT-3);g.fillStyle="#5a6b7a";g.fillText("U",pL+14,pT-3);
+  g.fillStyle="#69c08a";g.fillText("shaded = T·S",pL+30,pT-3);}
+function drawComplex(){const {g,w,h}=pcanvas($("pComplex"));const n=hist.meanA.length;if(n<2){emptyMsg(g);return;}
+  const pL=34,pR=40,pT=14,pB=12,pw=w-pL-pR,ph=h-pT-pB;
+  const amax=Math.max(...hist.maxA,3), smax=Math.max(...hist.species,3);
+  const ya=v=>pT+ph-v/amax*ph, ys=v=>pT+ph-v/smax*ph, x=i=>pL+i/(n-1)*pw;
+  g.strokeStyle="#1c2530";for(let k=0;k<=3;k++){const y=pT+ph*k/3;g.beginPath();g.moveTo(pL,y);g.lineTo(pL+pw,y);g.stroke();}
+  tsLine(g,hist.species,n,x,ys,"#69c08a"); tsLine(g,hist.maxA,n,x,ya,"#5b8dd6"); tsLine(g,hist.meanA,n,x,ya,accent());
+  g.font="9px ui-monospace,monospace";g.fillStyle=accent();g.fillText("mean atoms",pL+2,pT-3);g.fillStyle="#5b8dd6";g.fillText("max",pL+72,pT-3);g.fillStyle="#69c08a";g.textAlign="right";g.fillText("species",w-2,pT-3);g.textAlign="left";}
+function drawSize(){const {g,w,h}=pcanvas($("pSize"));const L2=ledger();if(!L2.N){emptyMsg(g);return;}
+  const hm=new Map();for(const s of L2.spec.values()){const a=s.rep.atoms.length;hm.set(a,(hm.get(a)||0)+s.n);}
+  const maxA=Math.max(...hm.keys()),maxN=Math.max(...hm.values());
+  const pL=30,pR=8,pT=10,pB=16,pw=w-pL-pR,ph=h-pT-pB,cap=Math.max(6,Math.min(maxA,24)),bw=pw/cap;
+  g.strokeStyle="#1c2530";g.beginPath();g.moveTo(pL,pT+ph);g.lineTo(pL+pw,pT+ph);g.stroke();
+  for(let a=1;a<=cap;a++){const nn=hm.get(a)||0;if(!nn)continue;const bh=nn/maxN*ph;g.fillStyle=accent();g.globalAlpha=.85;g.fillRect(pL+(a-1)*bw+0.5,pT+ph-bh,Math.max(1,bw-1),bh);}
+  g.globalAlpha=1;g.fillStyle="#586675";g.font="9px ui-monospace,monospace";for(let a=1;a<=cap;a+=cap>12?4:2)g.fillText(a,pL+(a-1)*bw,pT+ph+11);
+  g.fillText("atoms / molecule",pL+pw/2-32,h-3);}
+function drawAssembly(){const {g,w,h}=pcanvas($("pAssembly"));const L2=ledger();if(L2.species<1){emptyMsg(g);return;}
+  const pts=[...L2.spec.values()].map(s=>({x:s.rep.bonds.reduce((a,b)=>a+b.o,0),n:s.n}));
+  const xmax=Math.max(...pts.map(p=>p.x),1),nmax=Math.max(...pts.map(p=>p.n),1);
+  const pL=30,pR=10,pT=10,pB=16,pw=w-pL-pR,ph=h-pT-pB;
+  const X=v=>pL+(xmax<=1?0.5:v/xmax)*pw, Y=v=>pT+ph-(Math.log10(v)/Math.log10(nmax+1))*ph;
+  g.strokeStyle="#1c2530";g.beginPath();g.moveTo(pL,pT);g.lineTo(pL,pT+ph);g.lineTo(pL+pw,pT+ph);g.stroke();
+  for(const p of pts){g.fillStyle=accent();g.globalAlpha=.45;g.beginPath();g.arc(X(p.x),Y(p.n),Math.max(2,Math.sqrt(p.n)*1.3),0,7);g.fill();}
+  g.globalAlpha=1;g.fillStyle="#586675";g.font="9px ui-monospace,monospace";g.fillText("bonds (assembly proxy) →",pL+2,h-3);
+  g.save();g.translate(9,pT+ph/2+34);g.rotate(-Math.PI/2);g.fillText("copy number (log)",0,0);g.restore();}
+function draw(){if(autoRot&&running)az+=0.003;drawBox();drawLedger();drawSpecies();drawBigChain();drawAmino();drawThermo();drawComplex();drawSize();drawAssembly();const L2=ledger();$("ebudget").textContent=`U ${L2.U.toFixed(0)} + KE ${L2.KE.toFixed(0)} + E_int ${L2.EI.toFixed(0)} + bath ${heatBath.toFixed(0)} = ${L2.Etot.toFixed(0)} kJ`;$("epochCountV").textContent=epochCount;$("promCountV").textContent=promoted.size;}
 
-function buildLineageTree(){
-  // For each species, compute depth (longest chain to primordial)
-  // Clear memoized
-  for(var i=0;i<sim.species.length;i++) delete sim.species[i]._depth;
-  for(var i=0;i<sim.species.length;i++) getDepth(sim.species[i]);
+// ---------- loop ----------
+function loop(){if(!running)return;const t0=performance.now();while(performance.now()-t0<14)step(0.35);sample();draw();requestAnimationFrame(loop);}
+function sample(){const L2=ledger();hist.ke.push(L2.KE);hist.u.push(L2.Utot);hist.pe.push(L2.Etot);hist.F.push(L2.F);hist.TS.push(L2.Utot-L2.F);hist.meanA.push(L2.meanA);hist.maxA.push(L2.maxA);hist.species.push(L2.species);hist.T.push(L2.Tmeas);for(const k in hist)if(hist[k].length>600)hist[k].shift();recordSample(L2);}
 
-  // Find which species are currently alive
-  var alive={};for(var i=0;i<sim.mols.length;i++)alive[sim.mols[i].speciesId]=true;
+// ---------- self-test ----------
+function selfTest(){const out=[],push=(s,c)=>out.push(c?`<span class="${c}">${s}</span>`:s);const sv=P.thermo;P.thermo=false;
+  const bsv={};BATH_LIST.forEach(s=>{bsv[s]=bathEnabled[s];bathEnabled[s]=false;});updBathActive();   // closed system for the test
+  const inv=()=>{const c={C:0,H:0,N:0,O:0};for(const p of parts)for(const e of p.mol.atoms)c[e]++;return c;};
+  const tE=()=>{let U=0,K=0,E=0;for(const p of parts){U+=enthalpy(p.mol);K+=0.5*p.m*dot(p.v,p.v);E+=p.Eint;}return U+K+E;};
+  const tP=()=>{let x=0,y=0,z=0;for(const p of parts){x+=p.m*p.v.x;y+=p.m*p.v.y;z+=p.m*p.v.z;}return[x,y,z];};
+  const i0=inv(),e0=tE(),P0=tP(),hb=heatBath;
+  for(let i=0;i<3000;i++)step(0.35);
+  const i1=inv(),e1=tE()+(heatBath-hb),P1=tP();
+  push("[adiabatic conservation · 3D · 3000 steps]");
+  const aC=JSON.stringify(i0)===JSON.stringify(i1);push(`  atoms  C:${i1.C} H:${i1.H} N:${i1.N} O:${i1.O}  ->  ${aC?"CONSERVED":"BROKEN"}`,aC?"pass":"fail");
+  const eE=Math.abs(e1-e0)/(Math.abs(e0)+1);push(`  total energy  rel Δ ${eE.toExponential(2)}  ->  ${eE<1e-6?"CONSERVED":"CHECK"}`,eE<1e-6?"pass":"fail");
+  const pE=Math.hypot(P1[0]-P0[0],P1[1]-P0[1],P1[2]-P0[2])/(Math.hypot(P0[0],P0[1],P0[2])+1);push(`  momentum  |Δp|/|p| = ${pE.toExponential(2)}  ->  ${pE<1e-6?"CONSERVED":"CHECK"}`,pE<1e-6?"pass":"fail");
+  push("");push("Energy and momentum conserved in 3D by the collision/reaction routines;");push("bond enthalpy is exchanged with kinetic + internal energy, never created.");
+  P.thermo=sv;BATH_LIST.forEach(s=>bathEnabled[s]=bsv[s]);updBathActive();draw();$("selftest").classList.remove("dim");$("selftest").innerHTML=out.join("\n");}
 
-  // Find the top N deepest alive species (these are the longest lineages still surviving)
-  var aliveSpecies=[];
-  for(var i=0;i<sim.species.length;i++)if(alive[sim.species[i].id])aliveSpecies.push(sim.species[i]);
-  aliveSpecies.sort(function(a,b){return(b._depth||0)-(a._depth||0);});
-  var topLeaves=aliveSpecies.slice(0,8);
+// ---------- CSV ----------
+function exportCSV(){const L2=ledger();const rows=[["step","time","U","KE","Eint","Etot","T_meas","species","singletons","mean_atoms"]];
+  rows.push([steps,simTime.toFixed(2),L2.U.toFixed(1),L2.KE.toFixed(1),L2.EI.toFixed(1),L2.Etot.toFixed(1),L2.Tmeas.toFixed(1),L2.species,L2.single,L2.meanA.toFixed(3)]);
+  rows.push([]);rows.push(["# species","count","atoms","H_kJ"]);
+  for(const[k,e]of[...L2.spec.entries()].sort((a,b)=>b[1].n-a[1].n))rows.push([formula(e.rep),e.n,e.rep.atoms.length,enthalpy(e.rep).toFixed(1)]);
+  const blob=new Blob([rows.map(r=>r.join(",")).join("\n")],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(blob);a.download=`chno3d_T${P.T}.csv`;a.click();}
 
-  if(topLeaves.length===0) return {nodes:[],edges:[],maxDepth:0,maxStep:sim.step};
-
-  // Trace ancestry for each leaf
-  var nodesMap={};
-  var edges=[];
-
-  function traceBack(sp){
-    if(nodesMap[sp.id]) return;
-    nodesMap[sp.id]={sp:sp,isAlive:!!alive[sp.id]};
-    if(!sp.parent) return;
-    for(var i=0;i<sp.parent.length;i++){
-      var pid=sp.parent[i];
-      if(pid===-1) continue;
-      var psp=null;for(var j=0;j<sim.species.length;j++)if(sim.species[j].id===pid){psp=sim.species[j];break;}
-      if(psp){
-        edges.push({from:psp.id,to:sp.id});
-        traceBack(psp);
-      }
+// ---------- record data to disk ----------
+// Preferred: File System Access API streams straight to a chosen folder (low RAM, no rewrite).
+// Needs a page served over http(s)/localhost in Chrome/Edge. Opening the file as file:// blocks it,
+// so we fall back to buffering in memory and downloading the CSVs when you stop (works everywhere).
+const RXN_COLS=["comb","sr","dr","cond","hyd","act","acond","ahyd","deact","decomp"];
+const PLOT_HEADER="step,time,U_kJ,KE_kJ,Eint_kJ,Etot_kJ,T_meas_K,F_kJ,S_total,S_diversity,mean_atoms,max_atoms,species,singletons,heat_bath_kJ,W_chem_kJ,n_fuel,n_urea,n_parts,epoch_count,n_promoted,n_promoted_copies,"+RXN_COLS.map(c=>"cum_"+c).join(",")+","+RXN_COLS.map(c=>"cum_dG_"+c).join(",")+"\n";
+const MOL_HEADER="step,time,formula,canon,count,atoms,bonds,assembly_index_proxy,H_kJ,amide_bonds,rings,nC,nH,nN,nO\n";
+class FileLogger{
+  constructor(){this.q=[];this.w=null;this.busy=false;this.bytes=0;this.rows=0;this.name="";}
+  async open(dir,name){const fh=await dir.getFileHandle(name,{create:true});this.w=await fh.createWritable();this.name=name;}
+  line(t){this.q.push(t);this.rows++;this.drain();}
+  async drain(){if(this.busy||!this.w)return;this.busy=true;try{while(this.q.length){const c=this.q.splice(0).join("");await this.w.write(c);this.bytes+=c.length;}}catch(e){}this.busy=false;}
+  async close(){await this.drain();try{if(this.w)await this.w.close();}catch(e){}this.w=null;}
+}
+let recording=false,recMode="",recDir=null,plotLog=null,molLog=null,molInterval=50,lastMolStep=-1e12;
+let plotBuf="",molBuf="",recPre="chno_run",recStamp="",recPart=1,recRows=0,recMolRows=0;
+function dl(text,name){const b=new Blob([text],{type:"text/csv"});const a=document.createElement("a");a.href=URL.createObjectURL(b);a.download=name;document.body.appendChild(a);a.click();a.remove();setTimeout(()=>URL.revokeObjectURL(a.href),2000);}
+async function startRecording(){
+  recPre=(($("recPrefix").value||"chno_run").replace(/[^\w\-]/g,"_"))||"chno_run";
+  recStamp=new Date().toISOString().slice(0,19).replace(/[:T]/g,"-"); recPart=1; recRows=0; recMolRows=0;
+  // 1) try File System Access API (stream to a folder you pick)
+  if(window.showDirectoryPicker){
+    try{ recDir=await window.showDirectoryPicker({mode:"readwrite"}); }
+    catch(e){ if(e&&e.name==="AbortError")return false; recDir=null; }   // AbortError = user cancelled; else blocked (file://)
+    if(recDir){
+      try{
+        plotLog=new FileLogger(); await plotLog.open(recDir,`${recPre}_plots_${recStamp}.csv`);
+        molLog=new FileLogger(); await molLog.open(recDir,`${recPre}_molecules_${recStamp}.csv`);
+        plotLog.line(PLOT_HEADER); molLog.line(MOL_HEADER);
+        recMode="fs"; recording=true; lastMolStep=-1e12; return true;
+      }catch(e){ recDir=null; plotLog=molLog=null; }
     }
   }
-
-  for(var i=0;i<topLeaves.length;i++) traceBack(topLeaves[i]);
-
-  var nodes=[];for(var k in nodesMap) nodes.push(nodesMap[k]);
-  var maxDepth=0;for(var i=0;i<nodes.length;i++)maxDepth=Math.max(maxDepth,nodes[i].sp._depth||0);
-
-  return {nodes:nodes,edges:edges,maxDepth:maxDepth,maxStep:sim.step};
+  // 2) fallback: buffer in memory, download CSVs on stop (works from file:// and every browser)
+  recMode="mem"; plotBuf=PLOT_HEADER; molBuf=MOL_HEADER; recording=true; lastMolStep=-1e12;
+  $("recStatus").textContent="Recording (files will download when you stop). This page can't stream to a folder here — to pick a folder, serve it over http/localhost in Chrome/Edge.";
+  return true;
 }
-
-function renderTree(){
-  var dpr=(window.devicePixelRatio||1)*EXPORT_SCALE;
-  var cw=(treeCvs._expW||treeCvs.clientWidth||P.boxW);
-  treeCvs.width=cw*dpr;treeCvs.height=TREE_H*dpr;
-  treeCtx.setTransform(dpr,0,0,dpr,0,0);
-  // Export mode: transparent background + dark ink (for placing on light pages/slides).
-  var ink=EXPORT_MODE?"#1a202c":"#e2e8f0", inkDim=EXPORT_MODE?"#718096":"#4a5568",
-      titleCol=EXPORT_MODE?"#2d3748":"#718096", edgeCol=EXPORT_MODE?"rgba(0,0,0,0.10)":"rgba(255,255,255,0.08)";
-  if(EXPORT_MODE){treeCtx.clearRect(0,0,cw,TREE_H);}             // transparent
-  else{treeCtx.fillStyle="#090d15";treeCtx.fillRect(0,0,cw,TREE_H);}
-
-  var tree=buildLineageTree();
-  if(tree.nodes.length===0){
-    treeCtx.fillStyle=inkDim;treeCtx.font="11px monospace";treeCtx.textAlign="center";
-    treeCtx.fillText("Tree of Life — lineages appear as species evolve...",cw/2,TREE_H/2);
-    return;
-  }
-
-  // Wider side margins so primordial (right-aligned) and leaf (left-aligned) labels fit.
-  var ml=130,mr=130,mt=24,mb=18;
-  var w=cw-ml-mr,h=TREE_H-mt-mb;
-  var maxDepth=Math.max(tree.maxDepth,1);
-
-  // Title
-  treeCtx.fillStyle=titleCol;treeCtx.font="bold 10px monospace";treeCtx.textAlign="left";
-  treeCtx.fillText("TREE OF LIFE — Longest surviving lineages (depth = generations from primordial)",ml,14);
-
-  // Assign x by depth, y by position within that depth layer
-  var depthBuckets={};
-  for(var i=0;i<tree.nodes.length;i++){
-    var d=tree.nodes[i].sp._depth||0;
-    if(!depthBuckets[d]) depthBuckets[d]=[];
-    depthBuckets[d].push(tree.nodes[i]);
-  }
-
-  var posMap={};// id -> {x,y}
-  for(var d=0;d<=maxDepth;d++){
-    var bucket=depthBuckets[d];
-    if(!bucket) continue;
-    var x=ml+(d/maxDepth)*w;
-    var n=bucket.length;
-    for(var i=0;i<n;i++){
-      var y=mt+(i+0.5)/(n)*h;
-      posMap[bucket[i].sp.id]={x:x,y:y};
-    }
-  }
-
-  // Draw edges
-  for(var i=0;i<tree.edges.length;i++){
-    var e=tree.edges[i];
-    var from=posMap[e.from],to=posMap[e.to];
-    if(!from||!to) continue;
-    treeCtx.strokeStyle=edgeCol;treeCtx.lineWidth=1;
-    treeCtx.beginPath();
-    // Bezier curve for nice branch look
-    var midX=(from.x+to.x)/2;
-    treeCtx.moveTo(from.x,from.y);
-    treeCtx.bezierCurveTo(midX,from.y,midX,to.y,to.x,to.y);
-    treeCtx.stroke();
-
-    // Color overlay
-    treeCtx.strokeStyle=col(e.to)+(EXPORT_MODE?"66":"40");treeCtx.lineWidth=1.5;
-    treeCtx.beginPath();
-    treeCtx.moveTo(from.x,from.y);
-    treeCtx.bezierCurveTo(midX,from.y,midX,to.y,to.x,to.y);
-    treeCtx.stroke();
-  }
-
-  // Draw nodes (circles only)
-  for(var i=0;i<tree.nodes.length;i++){
-    var nd=tree.nodes[i],p=posMap[nd.sp.id];
-    if(!p) continue;
-    var r=nd.isAlive?4:2.5;
-    var c=col(nd.sp.id);
-    if(nd.isAlive){
-      treeCtx.beginPath();treeCtx.arc(p.x,p.y,r+4,0,Math.PI*2);
-      treeCtx.fillStyle=c+(EXPORT_MODE?"30":"18");treeCtx.fill();
-    }
-    treeCtx.beginPath();treeCtx.arc(p.x,p.y,r,0,Math.PI*2);
-    treeCtx.fillStyle=nd.isAlive?c:c+"80";
-    treeCtx.fill();
-  }
-
-  // Labels, drawn after circles with vertical de-confliction so names don't overlap.
-  // Candidates: alive nodes (right-pointing) and primordial nodes (left-pointing).
-  var labels=[];
-  for(var i=0;i<tree.nodes.length;i++){
-    var nd=tree.nodes[i],p=posMap[nd.sp.id];
-    if(!p)continue;
-    if(nd.isAlive||!nd.sp.parent)labels.push({nd:nd,p:p,prim:!nd.sp.parent});
-  }
-  // Sort by x then y so de-confliction is stable left-to-right, top-to-bottom.
-  labels.sort(function(a,b){return (a.p.x-b.p.x)||(a.p.y-b.p.y);});
-  var lineH=10;                 // minimum vertical gap between labels sharing an x-band
-  var xBandW=70;                // labels within this horizontal distance compete vertically
-  var usedByBand={};            // bandIndex -> array of y already taken
-  treeCtx.font="bold 8px monospace";
-  for(var i=0;i<labels.length;i++){
-    var L=labels[i],p=L.p,nd=L.nd;
-    var band=Math.round(p.x/xBandW);
-    // Check this band and both neighbours so labels near a band boundary still de-conflict.
-    var clash=false;
-    for(var bd=band-1;bd<=band+1&&!clash;bd++){
-      var arr=usedByBand[bd];if(!arr)continue;
-      for(var t=0;t<arr.length;t++)if(Math.abs(arr[t]-p.y)<lineH){clash=true;break;}
-    }
-    if(clash)continue;          // skip overlapping label
-    (usedByBand[band]||(usedByBand[band]=[])).push(p.y);
-    var r=nd.isAlive?4:2.5;
-    treeCtx.textAlign=nd.sp.parent?"left":"right";
-    var lx=nd.sp.parent?p.x+r+3:p.x-r-3;
-    treeCtx.font=(nd.isAlive?"bold ":"")+"8px monospace";
-    // In export mode, give dark text a soft light glow (shadow) so it stays legible over
-    // colored edges. Using shadowBlur rather than strokeText avoids miter "spikes" entirely.
-    if(EXPORT_MODE){
-      treeCtx.save();
-      treeCtx.shadowColor="rgba(255,255,255,0.9)";
-      treeCtx.shadowBlur=3;treeCtx.shadowOffsetX=0;treeCtx.shadowOffsetY=0;
-      treeCtx.fillStyle=nd.isAlive?"#1a202c":"#5a6678";
-      treeCtx.fillText(nd.sp.name,lx,p.y+3);   // first pass lays down the glow
-      treeCtx.fillText(nd.sp.name,lx,p.y+3);   // second pass darkens text crisply over it
-      treeCtx.restore();
-    }else{
-      treeCtx.fillStyle=nd.isAlive?"#e2e8f0":"#4a5568";
-      treeCtx.fillText(nd.sp.name,lx,p.y+3);
-    }
-  }
-
-  // Depth axis labels
-  treeCtx.fillStyle=inkDim;treeCtx.font="8px monospace";treeCtx.textAlign="center";
-  var nTicks=Math.min(maxDepth,10);
-  for(var i=0;i<=nTicks;i++){
-    var d=Math.round(i*maxDepth/nTicks);
-    var x=ml+(d/maxDepth)*w;
-    treeCtx.fillText("gen "+d,x,TREE_H-4);
-  }
+async function stopRecording(){
+  recording=false; const mode=recMode, dir=recDir?recDir.name:"";
+  if(mode==="fs"){const p=plotLog,m=molLog;plotLog=molLog=null;recDir=null;if(p)await p.close();if(m)await m.close();
+    const st=$("recStatus");if(st)st.textContent=`Stopped — files saved in “${dir}”.`;}
+  else if(mode==="mem"){const sfx=recPart>1?`_part${recPart}`:"";dl(plotBuf,`${recPre}_plots_${recStamp}${sfx}.csv`);dl(molBuf,`${recPre}_molecules_${recStamp}${sfx}.csv`);plotBuf=molBuf="";
+    const st=$("recStatus");if(st)st.textContent=`Stopped — ${recRows} plot rows + ${recMolRows} molecule rows downloaded to your Downloads folder.`;}
+  recMode="";
 }
-
-// ===================== DOM =====================
-
-var app=document.getElementById("app");
-function buildUI(){
-  app.innerHTML=
-  '<div style="display:flex;align-items:baseline;gap:12px;margin-bottom:10px;flex-wrap:wrap">'+
-    '<h1 style="font-size:17px;font-weight:700;color:#e2e8f0;letter-spacing:.5px">FIMD Artificial Chemistry</h1>'+
-    '<span style="font-size:10px;color:#4a5568">Darwinian selection in vibrational frequency space \u00B7 Early Earth</span>'+
-  '</div>'+
-  '<div style="display:flex;gap:10px;flex-wrap:wrap">'+
-    '<div style="flex:1 1 700px;min-width:0">'+
-      '<div class="panel" style="border-color:rgba(100,180,255,0.12);overflow:hidden;margin-bottom:8px">'+
-        '<canvas id="simCanvas" style="width:'+P.boxW+'px;height:'+P.boxH+'px"></canvas>'+
-      '</div>'+
-      '<div id="topBar" style="display:flex;gap:8px;align-items:center;margin-bottom:8px;flex-wrap:wrap"></div>'+
-    '</div>'+
-    '<div style="flex:0 0 310px;min-width:290px">'+
-      '<div id="tabBar" style="display:flex;gap:2px;margin-bottom:0"></div>'+
-      '<div id="rightContent"></div>'+
-    '</div>'+
-  '</div>'+
-  '<div class="panel" style="padding:6px;position:relative;height:'+(CHART_H+14)+'px;margin-top:8px">'+
-    '<button class="savebtn" data-cv="chartCanvas" data-nm="population" title="Save PNG">\u2913</button>'+
-    '<canvas id="chartCanvas" style="width:100%;height:'+CHART_H+'px"></canvas>'+
-  '</div>'+
-  '<div class="panel" style="padding:6px;position:relative;height:'+(TREE_H+8)+'px;margin-top:8px">'+
-    '<button class="savebtn" data-cv="treeCanvas" data-nm="tree_of_life" title="Save PNG">\u2913</button>'+
-    '<canvas id="treeCanvas" style="width:100%;height:'+TREE_H+'px"></canvas>'+
-  '</div>'+
-  '<div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px;margin-top:8px">'+
-    '<div class="panel" style="padding:6px;position:relative;height:'+(DIAG_H+14)+'px"><button class="savebtn" data-cv="massCanvas" data-nm="mass_distribution" title="Save PNG">\u2913</button><canvas id="massCanvas" style="width:100%;height:'+DIAG_H+'px"></canvas></div>'+
-    '<div class="panel" style="padding:6px;position:relative;height:'+(DIAG_H+14)+'px"><button class="savebtn" data-cv="rateCanvas" data-nm="reaction_rates" title="Save PNG">\u2913</button><canvas id="rateCanvas" style="width:100%;height:'+DIAG_H+'px"></canvas></div>'+
-    '<div class="panel" style="padding:6px;position:relative;height:'+(DIAG_H+14)+'px"><button class="savebtn" data-cv="autoCanvas" data-nm="autocatalysis" title="Save PNG">\u2913</button><canvas id="autoCanvas" style="width:100%;height:'+DIAG_H+'px"></canvas></div>'+
-    '<div class="panel" style="padding:6px;position:relative;height:'+(DIAG_H+14)+'px"><button class="savebtn" data-cv="physCanvas" data-nm="speed_vs_mass" title="Save PNG">\u2913</button><canvas id="physCanvas" style="width:100%;height:'+DIAG_H+'px"></canvas></div>'+
-  '</div>'+
-  '<div style="display:flex;gap:8px;margin-top:8px;flex-wrap:wrap">'+
-    '<button id="saveAllDiag" class="bigsave">\u2913 Save all diagnostics</button>'+
-  '</div>'+
-  '<div style="margin-top:8px;padding:6px 12px;background:rgba(56,161,105,0.06);border-radius:6px;border:1px solid rgba(56,161,105,0.12);font-size:10px;color:#68d391;display:flex;gap:12px;align-items:center;flex-wrap:wrap">'+
-    '<span style="font-weight:600;color:#38a169">Env:</span>'+
-    ENV_MOLECULES.map(function(e){return'<span style="color:#9ae6b4">'+e.name+'</span>';}).join("")+
-    '<span style="color:#4a5568;margin-left:auto;font-size:9px">Resonance + phase coupling \u00B7 FIMD harmonic phase advance</span>'+
-  '</div>';
-  buildTopBar();buildTabs();
-  // Wire per-panel and big save buttons.
-  var sb=document.querySelectorAll(".savebtn");for(var i=0;i<sb.length;i++)sb[i].onclick=(function(b){return function(){savePNG(b.getAttribute("data-cv"),b.getAttribute("data-nm"),3);};})(sb[i]);
-  var sad=document.getElementById("saveAllDiag");if(sad)sad.onclick=saveAllDiag;
-  var sad=document.getElementById("saveAllDiag");if(sad)sad.onclick=saveAllDiag;
+function saveNow(){
+  if(!recording){$("recStatus").textContent="Not recording — turn Record on first.";return;}
+  if(recMode==="fs"){$("recStatus").textContent="Streaming to your folder — the data is already on disk as it runs.";return;}
+  dl(plotBuf,`${recPre}_plots_${recStamp}_part${recPart}.csv`);dl(molBuf,`${recPre}_molecules_${recStamp}_part${recPart}.csv`);
+  plotBuf=PLOT_HEADER;molBuf=MOL_HEADER;const pn=recPart;recPart++;
+  $("recStatus").textContent=`Saved part ${pn} to Downloads (${recRows} plot / ${recMolRows} mol rows so far). Still recording — new data → part ${recPart}.`;
 }
-
-function buildTopBar(){
-  var tb=document.getElementById("topBar");tb.innerHTML="";
-  var btnRun=document.createElement("button");btnRun.id="btnRun";btnRun.style.background="#38a169";btnRun.textContent="\u25B6 Run";
-  btnRun.onclick=function(){running=!running;btnRun.textContent=running?"\u23F8 Pause":"\u25B6 Run";btnRun.style.background=running?"#e53e3e":"#38a169";};
-  tb.appendChild(btnRun);
-  var btnReset=document.createElement("button");btnReset.style.background="#4a5568";btnReset.textContent="\u21BA Reset";
-  btnReset.onclick=function(){running=false;var br=document.getElementById("btnRun");br.textContent="\u25B6 Run";br.style.background="#38a169";initSim();};
-  tb.appendChild(btnReset);
-  var btnCSV=document.createElement("button");btnCSV.style.background="#2b6cb0";btnCSV.textContent="\u2B07 Export CSV";btnCSV.onclick=exportCSV;tb.appendChild(btnCSV);
-  var spLbl=document.createElement("span");spLbl.style.cssText="font-size:10px;color:#718096;margin-left:6px";spLbl.textContent="Speed:";tb.appendChild(spLbl);
-  [1,3,8,20,50].forEach(function(v){var b=document.createElement("button");b.textContent=v+"x";b.setAttribute("data-speed",v);b.style.cssText="background:"+(v===P.simSpeed?"#4299e1":"#2d3748")+";min-width:30px;padding:3px 6px;font-size:10px";b.onclick=function(){P.simSpeed=v;var all=document.querySelectorAll("[data-speed]");for(var k=0;k<all.length;k++)all[k].style.background=parseInt(all[k].getAttribute("data-speed"))===v?"#4299e1":"#2d3748";};tb.appendChild(b);});
-  var st=document.createElement("div");st.id="statsBar";st.style.cssText="margin-left:auto;font-size:10px;color:#718096;display:flex;gap:12px;flex-wrap:wrap";tb.appendChild(st);
+function amideCount(m){let k=0;for(let c=0;c<m.atoms.length;c++){if(m.atoms[c]!=='C')continue;let dO=false,sN=0;
+  for(const b of m.bonds){const q=b.a===c?b.b:(b.b===c?b.a:-1);if(q<0)continue;if(m.atoms[q]==='O'&&b.o===2)dO=true;else if(m.atoms[q]==='N'&&b.o===1)sN++;}
+  if(dO)k+=sN;}return k;}
+const ringCount=m=>Math.max(0,m.bonds.length-m.atoms.length+components(m.atoms,m.bonds).length);
+function recordSample(L2){
+  if(!recording)return;
+  let nf=0,nu=0,npc=0;for(const p of parts){if(isFuelMol(p.mol))nf++;else if(isUreaMol(p.mol))nu++;
+    if(promotedCanon.size&&promotedCanon.has(canon(p.mol)))npc++;}   // copies of promoted (background) species, excluded from the foreground census
+  const prow=`${steps},${simTime.toFixed(3)},${L2.U.toFixed(1)},${L2.KE.toFixed(1)},${L2.EI.toFixed(1)},${L2.Etot.toFixed(1)},${L2.Tmeas.toFixed(1)},${L2.F.toFixed(1)},${L2.S.toFixed(2)},${L2.S_div.toFixed(4)},${L2.meanA.toFixed(3)},${L2.maxA},${L2.species},${L2.single},${heatBath.toFixed(1)},${wChem.toFixed(1)},${nf},${nu},${parts.length},${epochCount},${promoted.size},${npc},${RXN_COLS.map(c=>RXN[c]||0).join(",")},${RXN_COLS.map(c=>(RXNG[c]||0).toFixed(1)).join(",")}\n`;
+  if(recMode==="fs"&&plotLog)plotLog.line(prow); else if(recMode==="mem"){plotBuf+=prow;recRows++;}
+  if(steps-lastMolStep>=molInterval){lastMolStep=steps;
+    for(const [,e] of L2.spec){if(!e.rep.atoms.includes("C"))continue;const bo=e.rep.bonds.reduce((a,b)=>a+b.o,0);
+      const at=e.rep.atoms,cE=el=>at.filter(x=>x===el).length;
+      const mrow=`${steps},${simTime.toFixed(3)},${formula(e.rep)},${canon(e.rep)},${e.n},${at.length},${e.rep.bonds.length},${bo},${enthalpy(e.rep).toFixed(1)},${amideCount(e.rep)},${ringCount(e.rep)},${cE("C")},${cE("H")},${cE("N")},${cE("O")}\n`;
+      if(recMode==="fs"&&molLog)molLog.line(mrow); else if(recMode==="mem"){molBuf+=mrow;recMolRows++;}}}
+  // memory-mode RAM guard: auto-flush a part and reset buffers if they grow large
+  if(recMode==="mem"&&(plotBuf.length+molBuf.length)>4e6){dl(plotBuf,`${recPre}_plots_${recStamp}_part${recPart}.csv`);dl(molBuf,`${recPre}_molecules_${recStamp}_part${recPart}.csv`);recPart++;plotBuf=PLOT_HEADER;molBuf=MOL_HEADER;}
+  const st=$("recStatus");if(st){
+    if(recMode==="fs"){const kb=((plotLog?plotLog.bytes:0)+(molLog?molLog.bytes:0))/1024;
+      st.textContent=`streaming → “${recDir?recDir.name:"?"}”  ·  ${plotLog?plotLog.rows-1:0} plot rows, ${molLog?molLog.rows-1:0} molecule rows  ·  ${kb<1024?kb.toFixed(0)+" KB":(kb/1024).toFixed(1)+" MB"}`;}
+    else st.textContent=`recording (in memory) · ${recRows} plot / ${recMolRows} mol rows${recPart>1?` · part ${recPart}`:""} · press “Save data now”, or Record again to stop + download`;}
 }
-
-var currentTab="species";
-function buildTabs(){var tabBar=document.getElementById("tabBar");tabBar.innerHTML="";["species","params","log"].forEach(function(t){var b=document.createElement("button");b.className="tab-btn"+(currentTab===t?" active":"");b.textContent=t==="species"?"Species":t==="params"?"Parameters":"Event Log";b.onclick=function(){currentTab=t;buildTabs();renderRightPanel();};tabBar.appendChild(b);});renderRightPanel();}
-function renderRightPanel(){var rc=document.getElementById("rightContent");if(currentTab==="species")renderSpeciesTab(rc);else if(currentTab==="params")renderParamsTab(rc);else renderLogTab(rc);}
-
-function renderSpeciesTab(rc){
-  var c={};for(var i=0;i<sim.mols.length;i++)c[sim.mols[i].speciesId]=(c[sim.mols[i].speciesId]||0)+1;
-  var alive=[];for(var i=0;i<sim.species.length;i++)if(c[sim.species[i].id]>0)alive.push({sp:sim.species[i],n:c[sim.species[i].id]});
-  alive.sort(function(a,b){return b.n-a.n;});
-  var html='<div class="panel" style="padding:10px;max-height:480px;overflow-y:auto;border-radius:0 6px 6px 6px">';
-  html+='<div style="font-size:10px;color:#718096;margin-bottom:6px;font-weight:600">ALIVE: '+alive.length+' species, '+sim.mols.length+' mol ('+sim.species.length+' discovered)</div>';
-  for(var i=0;i<alive.length;i++){var sp=alive[i].sp,bg=selectedSp===sp.id?"rgba(66,153,225,0.12)":"transparent";
-    var depth=sp._depth!==undefined?sp._depth:(sp.depth||0);
-    html+='<div data-sid="'+sp.id+'" style="display:flex;align-items:center;gap:5px;padding:2px 4px;border-radius:3px;cursor:pointer;font-size:10px;line-height:15px;background:'+bg+'">'+
-      '<span style="width:7px;height:7px;border-radius:50%;background:'+col(sp.id)+';flex-shrink:0"></span>'+
-      '<span style="color:#e2e8f0;font-weight:500;min-width:72px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">'+sp.name+'</span>'+
-      '<span style="color:#4a5568;font-size:8px">['+sp.freqs.join(",")+']</span>'+
-      '<span style="color:#2d3748;font-size:7px;margin-left:2px">g'+depth+'</span>'+
-      '<span style="margin-left:auto;color:#a0aec0;font-weight:600;min-width:20px;text-align:right">'+alive[i].n+'</span>'+
-    '</div>';
-  }
-  html+='</div>';
-  if(selectedSp!==null){var sp=null;for(var i=0;i<sim.species.length;i++)if(sim.species[i].id===selectedSp){sp=sim.species[i];break;}
-    if(sp){var pn="Primordial";if(sp.parent){var parts=[];for(var i=0;i<sp.parent.length;i++){if(sp.parent[i]===-1){parts.push("Environment");continue;}var found=null;for(var j=0;j<sim.species.length;j++)if(sim.species[j].id===sp.parent[i]){found=sim.species[j];break;}parts.push(found?found.name:"Sp-"+sp.parent[i]);}pn=parts.join(" + ");}
-      var depth=sp._depth!==undefined?sp._depth:(sp.depth||0);
-      html+='<div class="panel" style="padding:8px;margin-top:6px;font-size:10px">'+
-        '<div style="display:flex;align-items:center;gap:5px;margin-bottom:3px"><span style="width:9px;height:9px;border-radius:50%;background:'+col(sp.id)+'"></span><span style="font-weight:600;color:#e2e8f0">'+sp.name+'</span></div>'+
-        '<div style="color:#718096">Modes: <span style="color:#a0aec0">'+sp.freqs.join(", ")+' cm\u207B\u00B9</span></div>'+
-        '<div style="color:#718096">Origin: <span style="color:#a0aec0">'+pn+'</span></div>'+
-        '<div style="color:#718096">Generation: <span style="color:#a0aec0">'+depth+'</span></div>'+
-        (sp.birthStep?'<div style="color:#718096">Born at step: <span style="color:#a0aec0">'+sp.birthStep+'</span></div>':'')+
-      '</div>';
-    }
-  }
-  rc.innerHTML=html;
-  var els=rc.querySelectorAll("[data-sid]");for(var i=0;i<els.length;i++){els[i].onclick=(function(el){return function(){var id=parseInt(el.getAttribute("data-sid"));selectedSp=selectedSp===id?null:id;renderRightPanel();};})(els[i]);}
-}
-
-function renderParamsTab(rc){
-  var defs=[
-    {key:"initialSpecies",label:"Initial species",min:2,max:100,step:1},
-    {key:"initialPopPerSpecies",label:"Pop per species",min:1,max:50,step:1},
-    {key:"maxSpecies",label:"Max species cap",min:10,max:2000,step:10},
-    {key:"maxPop",label:"Max population",min:50,max:2000,step:10},
-    {key:"minPop",label:"Min population",min:10,max:200,step:5},
-    {key:"collisionR",label:"Collision radius",min:3,max:25,step:1},
-    {key:"reactionProb",label:"Reaction prob",min:0.01,max:0.5,step:0.01},
-    {key:"decayRate",label:"Decay rate",min:0.0001,max:0.005,step:0.0001},
-    {key:"envReactRate",label:"Env. react rate",min:0.0001,max:0.01,step:0.0001},
-    {key:"speedFactor",label:"Molecule speed",min:0.2,max:4,step:0.1},
-    {key:"freqMin",label:"Freq min (cm\u207B\u00B9)",min:10,max:200,step:5},
-    {key:"freqMax",label:"Freq max (cm\u207B\u00B9)",min:200,max:2000,step:10},
-    {key:"freqTolerance",label:"Species tolerance",min:2,max:50,step:1},
-    {key:"baseBarrier",label:"Reaction barrier",min:0,max:1500,step:10},
-    {key:"resCatalysis",label:"Resonance catalysis",min:0,max:1,step:0.05},
-    {key:"resSharp",label:"Resonance sharpness",min:1,max:8,step:0.5},
-    {key:"kT",label:"Thermal scale (kT)",min:20,max:1000,step:10},
-    {key:"keCouple",label:"KE coupling",min:0,max:3,step:0.1},
-    {key:"phaseSharp",label:"Phase sharpness",min:0,max:6,step:0.5},
-    {key:"envEnergyScale",label:"Env energy scale",min:0,max:6,step:0.2},
-    {key:"initMassMin",label:"Init mass min",min:1,max:10,step:1},
-    {key:"initMassMax",label:"Init mass max",min:2,max:20,step:1},
-    {key:"maxModes",label:"Max modes/mol",min:1,max:8,step:1},
-    {key:"reservoirInit",label:"Mass reservoir",min:0,max:20000,step:200},
-    {key:"bondEnergy",label:"Bond energy/mass",min:0,max:200,step:5},
-    {key:"modeWellScale",label:"Well freq weight",min:0,max:1,step:0.05},
-    {key:"radiusBase",label:"Radius base (cbrt)",min:1,max:10,step:0.5},
-    {key:"floppyScale",label:"Spectral reactivity",min:0,max:1,step:0.05},
-    {key:"csvInterval",label:"CSV record interval",min:5,max:500,step:5},
-  ];
-  var html='<div class="panel" style="padding:10px;max-height:480px;overflow-y:auto;border-radius:0 6px 6px 6px">';
-  html+='<div style="font-size:10px;color:#718096;margin-bottom:8px;font-weight:600">SIMULATION PARAMETERS</div>';
-  html+='<div style="font-size:9px;color:#4a5568;margin-bottom:8px">Initial species/pop apply on Reset. Other params are live.</div>';
-  for(var i=0;i<defs.length;i++){var d=defs[i],v=P[d.key];var isFloat=d.step<1;
-    html+='<div class="ctrl-row"><label>'+d.label+'</label><input type="range" data-pk="'+d.key+'" min="'+d.min+'" max="'+d.max+'" step="'+d.step+'" value="'+v+'"><span class="val" id="pv_'+d.key+'">'+(isFloat?v.toFixed(4):v)+'</span></div>';
-  }
-  html+='<div style="margin-top:10px"><button id="btnApplyReset" style="background:#38a169;font-size:10px">Apply & Reset</button></div></div>';
-  rc.innerHTML=html;
-  var sliders=rc.querySelectorAll("input[type=range]");for(var i=0;i<sliders.length;i++){sliders[i].oninput=(function(sl){return function(){var k=sl.getAttribute("data-pk");var v=parseFloat(sl.value);P[k]=v;var isFloat=parseFloat(sl.getAttribute("step"))<1;document.getElementById("pv_"+k).textContent=isFloat?v.toFixed(4):v;};})(sliders[i]);}
-  document.getElementById("btnApplyReset").onclick=function(){running=false;var br=document.getElementById("btnRun");if(br){br.textContent="\u25B6 Run";br.style.background="#38a169";}initSim();};
-}
-
-function renderLogTab(rc){
-  var html='<div class="panel" style="padding:10px;max-height:480px;overflow-y:auto;border-radius:0 6px 6px 6px">';
-  html+='<div style="font-size:10px;color:#718096;margin-bottom:6px;font-weight:600">EVENT LOG ('+events.length+')</div>';
-  if(!events.length)html+='<div style="font-size:10px;color:#4a5568">Press Run to start...</div>';
-  for(var i=0;i<events.length;i++)html+='<div style="font-size:9px;color:#a0aec0;padding:2px 0;border-bottom:1px solid rgba(255,255,255,0.03);line-height:13px;opacity:'+(1-i*0.015)+'">'+events[i]+'</div>';
-  html+='</div>';rc.innerHTML=html;
-}
-
-// ===================== RENDER =====================
-var simCvs,simCtx,chartCvs,chartCtx,treeCvs,treeCtx;
-var massCvs,massCtx,rateCvs,rateCtx,autoCvs,autoCtx,physCvs,physCtx;
-function initCanvases(){simCvs=document.getElementById("simCanvas");simCtx=simCvs.getContext("2d");chartCvs=document.getElementById("chartCanvas");chartCtx=chartCvs.getContext("2d");treeCvs=document.getElementById("treeCanvas");treeCtx=treeCvs.getContext("2d");
-  massCvs=document.getElementById("massCanvas");massCtx=massCvs.getContext("2d");
-  rateCvs=document.getElementById("rateCanvas");rateCtx=rateCvs.getContext("2d");
-  autoCvs=document.getElementById("autoCanvas");autoCtx=autoCvs.getContext("2d");
-  physCvs=document.getElementById("physCanvas");physCtx=physCvs.getContext("2d");
-}
-// Map each exportable canvas id to its render function and display width source.
-function diagRenderById(id){return {massCanvas:renderMass,rateCanvas:renderRate,autoCanvas:renderAuto,physCanvas:renderPhys,chartCanvas:renderChart,treeCanvas:renderTree}[id];}
-// Export a single canvas to a high-resolution PNG by re-rendering at EXPORT_SCALE.
-function savePNG(canvasId,name,scale){
-  scale=scale||3;
-  var cvs=document.getElementById(canvasId);if(!cvs)return;
-  var dispW=cvs.clientWidth||cvs.width;            // current on-screen CSS width
-  var fn=diagRenderById(canvasId);if(!fn)return;
-  cvs._expW=dispW;EXPORT_SCALE=scale;EXPORT_MODE=true;
-  try{fn();}catch(e){}                              // re-render at boosted resolution, export styling
-  var url;try{url=cvs.toDataURL("image/png");}catch(e){url=null;}
-  EXPORT_SCALE=1;cvs._expW=null;EXPORT_MODE=false;
-  try{fn();}catch(e){}                              // restore on-screen resolution + styling
-  if(url){var a=document.createElement("a");a.href=url;a.download="fimd_"+name+"_step"+sim.step+".png";a.click();}
-}
-function saveAllDiag(){["massCanvas","rateCanvas","autoCanvas","physCanvas"].forEach(function(id,k){var nm=["mass_distribution","reaction_rates","autocatalysis","speed_vs_mass"][k];setTimeout(function(){savePNG(id,nm,3);},k*150);});}
-// Shared helper: set up a diagnostic canvas, return {cw,h,ctx} with margins applied.
-var EXPORT_SCALE=1; // boosted temporarily during high-res PNG export
-var EXPORT_MODE=false; // true during export: transparent background + dark ink
-function diagSetup(cvs,ctx,title){
-  var dpr=(window.devicePixelRatio||1)*EXPORT_SCALE;var cw=(cvs._expW||cvs.clientWidth||300);cvs.width=cw*dpr;cvs.height=DIAG_H*dpr;ctx.setTransform(dpr,0,0,dpr,0,0);
-  if(EXPORT_MODE){ctx.clearRect(0,0,cw,DIAG_H);ctx.fillStyle="#2d3748";}
-  else{ctx.fillStyle="#0c1019";ctx.fillRect(0,0,cw,DIAG_H);ctx.fillStyle="#718096";}
-  ctx.font="9px monospace";ctx.textAlign="left";ctx.fillText(title,6,12);
-  return cw;
-}
-// Ink color helpers for diagnostic panels (dark in export, light on screen).
-function dInk(){return EXPORT_MODE?"#1a202c":"#a0aec0";}
-function dDim(){return EXPORT_MODE?"#718096":"#4a5568";}
-// Fill-then-scroll time window. Returns {t0,t1} step bounds for the x-axis.
-// While the sim is young the window starts at step 0 (curve grows into the frame from the
-// left); once enough time has elapsed to fill the buffer span, the window slides so the
-// newest data sits at the right edge. spanSteps = buffer capacity expressed in steps.
-function timeWindow(){
-  var spanSteps=400*Math.max(1,P.csvInterval);
-  var t1=Math.max(spanSteps,sim.step);   // right edge: current step, but never less than one full span
-  var t0=t1-spanSteps;                   // left edge
-  return {t0:t0,t1:t1,span:spanSteps};
-}
-function tx(step,ml,w,win){return ml+(step-win.t0)/(win.t1-win.t0)*w;}
-
-function renderSim(){
-  var dpr=window.devicePixelRatio||1;simCvs.width=P.boxW*dpr;simCvs.height=P.boxH*dpr;simCtx.setTransform(dpr,0,0,dpr,0,0);
-  simCtx.fillStyle="#0a0e17";simCtx.fillRect(0,0,P.boxW,P.boxH);
-  simCtx.strokeStyle="rgba(255,255,255,0.025)";simCtx.lineWidth=.5;
-  for(var x=0;x<P.boxW;x+=40){simCtx.beginPath();simCtx.moveTo(x,0);simCtx.lineTo(x,P.boxH);simCtx.stroke();}
-  for(var y=0;y<P.boxH;y+=40){simCtx.beginPath();simCtx.moveTo(0,y);simCtx.lineTo(P.boxW,y);simCtx.stroke();}
-  for(var i=0;i<sim.mols.length;i++){var p=sim.mols[i],c2=col(p.speciesId);var amp=0;for(var k=0;k<p.modes.length;k++){var mm=p.modes[k];amp+=Math.sqrt(mm.q*mm.q+Math.pow(mm.pi/(mm.freq*.01||1),2));}amp/=p.modes.length;var r=Math.max(1.8,(p.r||P.collisionR)*0.45)+Math.min(amp*8,2);
-    simCtx.beginPath();simCtx.arc(p.x,p.y,r+1.2,0,Math.PI*2);simCtx.fillStyle=c2+"20";simCtx.fill();
-    simCtx.beginPath();simCtx.arc(p.x,p.y,r,0,Math.PI*2);simCtx.fillStyle=c2;simCtx.fill();}
-  simCtx.strokeStyle="rgba(100,180,255,0.12)";simCtx.lineWidth=1;simCtx.strokeRect(.5,.5,P.boxW-1,P.boxH-1);
-}
-
-function getTopIds(){var c={};for(var i=0;i<sim.mols.length;i++)c[sim.mols[i].speciesId]=(c[sim.mols[i].speciesId]||0)+1;var arr=[];for(var k in c)arr.push({id:parseInt(k),n:c[k]});arr.sort(function(a,b){return b.n-a.n;});var out=[];for(var i=0;i<Math.min(15,arr.length);i++)out.push(arr[i].id);return out;}
-
-function renderChart(){
-  var dpr=(window.devicePixelRatio||1)*EXPORT_SCALE;var cw=(chartCvs._expW||chartCvs.clientWidth||P.boxW);chartCvs.width=cw*dpr;chartCvs.height=CHART_H*dpr;chartCtx.setTransform(dpr,0,0,dpr,0,0);
-  if(EXPORT_MODE){chartCtx.clearRect(0,0,cw,CHART_H);}else{chartCtx.fillStyle="#0c1019";chartCtx.fillRect(0,0,cw,CHART_H);}
-  if(popHistory.length<2){chartCtx.fillStyle=dDim();chartCtx.font="11px monospace";chartCtx.textAlign="center";chartCtx.fillText("Population chart...",cw/2-60,CHART_H/2);return;}
-  var topIds=getTopIds();var ml=36,mr=10,mt=10,mb=22,w=cw-ml-mr,h=CHART_H-mt-mb;var maxC=1;
-  var win=timeWindow();
-  for(var i=0;i<popHistory.length;i++){if(popHistory[i].step<win.t0)continue;for(var j=0;j<topIds.length;j++)maxC=Math.max(maxC,popHistory[i].counts[topIds[j]]||0);}
-  chartCtx.strokeStyle=EXPORT_MODE?"#cbd5e0":"#2d3748";chartCtx.lineWidth=1;chartCtx.beginPath();chartCtx.moveTo(ml,mt);chartCtx.lineTo(ml,mt+h);chartCtx.lineTo(ml+w,mt+h);chartCtx.stroke();
-  chartCtx.fillStyle=dDim();chartCtx.font="9px monospace";chartCtx.textAlign="right";
-  for(var i=0;i<=4;i++){var v=Math.round(maxC*i/4),y=mt+h-h*i/4;chartCtx.fillText(v,ml-4,y+3);if(i>0){chartCtx.strokeStyle=EXPORT_MODE?"#e2e8f0":"#1a202c";chartCtx.lineWidth=.5;chartCtx.beginPath();chartCtx.moveTo(ml,y);chartCtx.lineTo(ml+w,y);chartCtx.stroke();}}
-  chartCtx.textAlign="center";chartCtx.fillText(Math.max(0,Math.round(win.t0)),ml,mt+h+14);chartCtx.fillText(Math.round(win.t1),ml+w,mt+h+14);
-  for(var si=0;si<topIds.length;si++){var sid=topIds[si];chartCtx.strokeStyle=col(sid);chartCtx.lineWidth=1.3;chartCtx.beginPath();var started=false;
-    for(var k=0;k<popHistory.length;k++){if(popHistory[k].step<win.t0)continue;var x=tx(popHistory[k].step,ml,w,win);var y=mt+h-(popHistory[k].counts[sid]||0)/maxC*h;if(!started){chartCtx.moveTo(x,y);started=true;}else chartCtx.lineTo(x,y);}chartCtx.stroke();}
-}
-
-// Panel 1: mass distribution histogram of the live population.
-function renderMass(){
-  if(!massCtx)return;var cw=diagSetup(massCvs,massCtx,"MASS DISTRIBUTION");
-  var h={},maxM=1;for(var i=0;i<sim.mols.length;i++){var mm=sim.mols[i].mass;h[mm]=(h[mm]||0)+1;if(mm>maxM)maxM=mm;}
-  var maxC=1;for(var k in h)if(h[k]>maxC)maxC=h[k];
-  var ml=24,mb=16,mt=18,w=cw-ml-6,hh=DIAG_H-mt-mb;
-  var nb=40,bw=w/nb;   // fixed 40 bins so the axis always spans the full width
-  for(var b=1;b<=nb;b++){var cnt=h[b]||0;var bh=cnt/maxC*hh;massCtx.fillStyle="#4d96ff";massCtx.fillRect(ml+(b-1)*bw,mt+hh-bh,Math.max(1,bw-1),bh);}
-  massCtx.fillStyle=dDim();massCtx.font="8px monospace";massCtx.textAlign="left";massCtx.fillText("mass 1",ml,DIAG_H-4);massCtx.textAlign="right";massCtx.fillText("mass "+nb,cw-6,DIAG_H-4);
-  massCtx.textAlign="left";massCtx.fillStyle=dDim();massCtx.fillText("n",6,mt+8);
-}
-
-// Panel 2: cumulative forward (novel) vs reverse (recombination) reactions over time.
-function renderRate(){
-  if(!rateCtx)return;var cw=diagSetup(rateCvs,rateCtx,"REACTIONS: fwd(novel) vs rev(recomb)");
-  var H=sim.rxnHist;if(H.length<2){return;}
-  var ml=30,mr=6,mt=18,mb=14,w=cw-ml-mr,hh=DIAG_H-mt-mb;
-  var win=timeWindow();
-  var maxV=1;for(var k=0;k<H.length;k++){if(H[k].step<win.t0)continue;if(H[k].fwd>maxV)maxV=H[k].fwd;if(H[k].rev>maxV)maxV=H[k].rev;}
-  function line(key,color){rateCtx.strokeStyle=color;rateCtx.lineWidth=1.4;rateCtx.beginPath();var started=false;for(var k=0;k<H.length;k++){if(H[k].step<win.t0)continue;var x=tx(H[k].step,ml,w,win);var y=mt+hh-H[k][key]/maxV*hh;if(!started){rateCtx.moveTo(x,y);started=true;}else rateCtx.lineTo(x,y);}rateCtx.stroke();}
-  line("fwd","#ff922b");line("rev","#4dabf7");
-  rateCtx.font="8px monospace";rateCtx.fillStyle="#ff922b";rateCtx.textAlign="left";rateCtx.fillText("fwd "+sim.fwdRxn,ml,mt+8);rateCtx.fillStyle="#4dabf7";rateCtx.fillText("rev "+sim.revRxn,ml+60,mt+8);
-}
-
-// Panel 3: number of autocatalytic species and cumulative autocatalytic events over time.
-function renderAuto(){
-  if(!autoCtx)return;var cw=diagSetup(autoCvs,autoCtx,"AUTOCATALYSIS (self-replicators)");
-  var H=sim.rxnHist;if(H.length<2){return;}
-  var ml=26,mr=6,mt=18,mb=14,w=cw-ml-mr,hh=DIAG_H-mt-mb;
-  var win=timeWindow();
-  var maxN=1;for(var k=0;k<H.length;k++){if(H[k].step<win.t0)continue;if(H[k].nAuto>maxN)maxN=H[k].nAuto;}
-  autoCtx.strokeStyle="#20c997";autoCtx.lineWidth=1.5;autoCtx.beginPath();var started=false;
-  for(var k=0;k<H.length;k++){if(H[k].step<win.t0)continue;var x=tx(H[k].step,ml,w,win);var y=mt+hh-H[k].nAuto/maxN*hh;if(!started){autoCtx.moveTo(x,y);started=true;}else autoCtx.lineTo(x,y);}autoCtx.stroke();
-  var nAuto=0;for(var i=0;i<sim.species.length;i++)if(sim.species[i].autocat)nAuto++;
-  autoCtx.font="8px monospace";autoCtx.fillStyle="#20c997";autoCtx.textAlign="left";autoCtx.fillText("species: "+nAuto+"  events: "+sim.autoRxn,ml,mt+8);
-}
-
-// Panel 4: scatter of molecule speed vs mass, illustrating Maxwell-Boltzmann 1/sqrt(mass).
-function renderPhys(){
-  if(!physCtx)return;var cw=diagSetup(physCvs,physCtx,"SPEED vs MASS (\u221D 1/\u221Amass)");
-  var ml=28,mr=8,mt=18,mb=16,w=cw-ml-mr,hh=DIAG_H-mt-mb;
-  var maxM=2,maxS=0.01;for(var i=0;i<sim.mols.length;i++){var p=sim.mols[i];var sp=Math.sqrt(p.vx*p.vx+p.vy*p.vy);if(p.mass>maxM)maxM=p.mass;if(sp>maxS)maxS=sp;}
-  // theoretical curve speedFactor/sqrt(mass)
-  physCtx.strokeStyle="#ffd93d";physCtx.lineWidth=1;physCtx.globalAlpha=.7;physCtx.beginPath();
-  for(var mm=1;mm<=maxM;mm++){var x=ml+(mm-1)/(maxM-1||1)*w;var y=mt+hh-Math.min(maxS,P.speedFactor/Math.sqrt(mm))/maxS*hh;mm>1?physCtx.lineTo(x,y):physCtx.moveTo(x,y);}physCtx.stroke();physCtx.globalAlpha=1;
-  for(var i=0;i<sim.mols.length;i++){var p=sim.mols[i];var sp=Math.sqrt(p.vx*p.vx+p.vy*p.vy);var x=ml+(p.mass-1)/(maxM-1||1)*w;var y=mt+hh-Math.min(maxS,sp)/maxS*hh;physCtx.fillStyle=col(p.speciesId)+"aa";physCtx.fillRect(x-1,y-1,2,2);}
-  physCtx.fillStyle=dDim();physCtx.font="8px monospace";physCtx.textAlign="left";physCtx.fillText("mass\u2192",cw-40,DIAG_H-4);physCtx.fillText("v",6,mt+8);
-}
-
-function renderStats(){var st=document.getElementById("statsBar");if(!st)return;var c={};for(var i=0;i<sim.mols.length;i++)c[sim.mols[i].speciesId]=true;var nAlive=Object.keys(c).length;
-  // Find max depth alive
-  var maxD=0;for(var i=0;i<sim.species.length;i++)if(c[sim.species[i].id]){var d=sim.species[i]._depth||sim.species[i].depth||0;maxD=Math.max(maxD,d);}
-  var molMass=0;for(var i=0;i<sim.mols.length;i++)molMass+=sim.mols[i].mass;
-  var err=(molMass+sim.reservoir)-sim.totalMass;
-  var consColor=err===0?"#68d391":"#ff6b6b";
-  st.innerHTML='<span>Step: <b style="color:#a0aec0">'+sim.step+'</b></span><span>Mol: <b style="color:#a0aec0">'+sim.mols.length+'</b></span><span>Alive: <b style="color:#a0aec0">'+nAlive+'</b></span><span>Disc: <b style="color:#a0aec0">'+sim.species.length+'</b></span><span>Rxns: <b style="color:#a0aec0">'+sim.reactions+'</b></span><span>MaxGen: <b style="color:#68d391">'+maxD+'</b></span><span>Mass(mol): <b style="color:#a0aec0">'+molMass+'</b></span><span>Reservoir: <b style="color:#a0aec0">'+sim.reservoir+'</b></span><span>\u03A3Mass: <b style="color:'+consColor+'">'+(molMass+sim.reservoir)+'/'+sim.totalMass+'</b></span>';
-}
-
-// ===================== MAIN LOOP =====================
-initSim();buildUI();initCanvases();
-var lastUi=0,lastTree=0;
-
-function loop(){
-  if(running)stepSim();
-  renderSim();
-  var now=performance.now();
-  if(now-lastUi>120){lastUi=now;renderChart();
-    if(currentTab==="species")renderSpeciesTab(document.getElementById("rightContent"));
-    else if(currentTab==="log")renderLogTab(document.getElementById("rightContent"));
-    renderStats();
-  }
-  // Tree + diagnostic panels update less frequently (more expensive)
-  if(now-lastTree>500){lastTree=now;renderTree();renderMass();renderRate();renderAuto();renderPhys();}
-  requestAnimationFrame(loop);
-}
-renderChart();renderStats();renderTree();
-requestAnimationFrame(loop);
+function reset(){running=false;runBtn.textContent="Run";runBtn.classList.add("primary");seed();steps=0;simTime=0;heatBath=0;wChem=0;rxnReset();promoted=new Map();refreshPromoted();msizeHist=[];epochCount=0;lastEpochStep=-1;for(const k in hist)hist[k].length=0;fit();draw();}
+function bind(id,vid,fmt,apply){const el=$(id),o=$(vid);const u=()=>{apply(parseFloat(el.value));o.textContent=fmt(parseFloat(el.value));};el.addEventListener("input",u);u();}
+bind("T","TV",v=>`${v} K`,v=>P.T=v);bind("eopen","eopenV",v=>`${v} kJ/mol`,v=>{P.eopen=v;ENTH_VER++;});bind("beta","betaV",v=>`${v} kJ/mol`,v=>P.beta=v);
+bind("dSact","dSactV",v=>`C₀ = ${Math.abs(v)} J/mol·K`,v=>dSact=v);
+bind("den","denV",v=>v.toFixed(2),v=>P.den=v);bind("n","nV",v=>`${v}`,v=>P.N=v);bind("init","initV",v=>v==0?"atomized":"reducing",v=>P.init=v);
+bind("viewSlab","viewSlabV",v=>`${Math.round(v*100)}%`,v=>{viewSlab=v;if(!running)draw();});
+bind("tLow","tLowV",v=>`${v} K`,v=>tLow=v);bind("tHigh","tHighV",v=>`${v} K`,v=>tHigh=v);bind("tPer","tPerV",v=>`${v}`,v=>tPeriod=v);
+bind("gamma","gammaV",v=>v.toFixed(2),v=>gammaFric=v);
+bind("ksolv","ksolvV",v=>`${v} kJ/mol`,v=>ksolv=v);
+bind("epochKeep","epochKeepV",v=>`${v}`,v=>epochKeep=v);
+bind("epochPlat","epochPlatV",v=>v.toFixed(3),v=>epochPlateau=v);
+const solvSw=$("solventSwitch");solvSw.addEventListener("click",()=>{solvent=!solvent;solvSw.classList.toggle("on",solvent);$("solventState").textContent=solvent?"ON":"OFF";updTag();});
+const epSw=$("epochSwitch");epSw.addEventListener("click",()=>{epochOn=!epochOn;epSw.classList.toggle("on",epochOn);$("epochState").textContent=epochOn?"ON":"OFF";});
+$("epochNowBtn").addEventListener("click",()=>{runEpoch();$("epochCountV").textContent=epochCount;$("promCountV").textContent=promoted.size;sample();draw();});
+$("epochClearBtn").addEventListener("click",()=>{promoted=new Map();refreshPromoted();$("promCountV").textContent=0;sample();draw();});
+function updTag(){$("tag").textContent=(solvent?"solution":"gas")+" · "+(autoTherm?"thermal cycling":(P.thermo?"canonical":"adiabatic"));}
+const autoSw=$("autoSwitch");
+autoSw.addEventListener("click",()=>{autoTherm=!autoTherm;autoSw.classList.toggle("on",autoTherm);$("autoState").textContent=autoTherm?"ON":"OFF";
+  if(autoTherm&&!P.thermo){P.thermo=true;$("thermoSwitch").classList.add("on");$("thermoState").textContent="ON";}updTag();});
+const th=$("thermoSwitch");th.addEventListener("click",()=>{P.thermo=!P.thermo;th.classList.toggle("on",P.thermo);$("thermoState").textContent=P.thermo?"ON":"OFF";
+  if(!P.thermo&&autoTherm){autoTherm=false;autoSw.classList.remove("on");$("autoState").textContent="OFF";}updTag();});
+const runBtn=$("runBtn");runBtn.addEventListener("click",()=>{running=!running;runBtn.textContent=running?"Pause":"Run";runBtn.classList.toggle("primary",!running);if(running)requestAnimationFrame(loop);});
+$("stepBtn").addEventListener("click",()=>{for(let i=0;i<30;i++)step(0.35);sample();draw();});
+$("resetBtn").addEventListener("click",reset);$("testBtn").addEventListener("click",selfTest);$("csvBtn").addEventListener("click",exportCSV);
+// record to disk
+bind("molInt","molIntV",v=>`${v} steps`,v=>molInterval=v);
+const recSw=$("recSwitch");let recBusy=false;
+recSw.addEventListener("click",async()=>{if(recBusy)return;recBusy=true;
+  try{ if(!recording){ if(await startRecording()){recSw.classList.add("on");$("recState").textContent="ON";} }
+       else { recSw.classList.remove("on");$("recState").textContent="OFF";await stopRecording(); } }
+  finally{recBusy=false;} });
+$("recSaveBtn").addEventListener("click",saveNow);
+addEventListener("beforeunload",()=>{if(recording){try{plotLog&&plotLog.close();molLog&&molLog.close();}catch(e){}}});
+// drag to rotate
+let drag=false,lx=0,ly=0;box.addEventListener("mousedown",e=>{drag=true;autoRot=false;lx=e.clientX;ly=e.clientY;});
+addEventListener("mouseup",()=>drag=false);addEventListener("mousemove",e=>{if(!drag)return;az+=(e.clientX-lx)*0.01;el+=(e.clientY-ly)*0.01;el=Math.max(-1.4,Math.min(1.4,el));lx=e.clientX;ly=e.clientY;if(!running)draw();});
+box.addEventListener("wheel",e=>{e.preventDefault();zoom*=Math.exp(-e.deltaY*0.0016);zoom=Math.max(0.4,Math.min(12,zoom));if(!running)draw();},{passive:false});
+addEventListener("resize",()=>{fit();draw();});
+// feedstock bath UI
+initBathKeys();
+function refreshBathChips(){const host=$("bathChips");[...host.children].forEach(c=>{const s=c.dataset.sp,on=bathEnabled[s],t=bathTargetFor(s);
+  c.classList.toggle("on",on&&t>0);
+  c.innerHTML=s.replace(/(\d+)/g,"<sub>$1</sub>")+(on&&t>0?` <span style="opacity:.65">${t}</span>`:(on?' <span style="opacity:.5">0</span>':""));});}
+bind("bathAmt","bathAmtV",v=>`${v}`,v=>{bathTarget=v;updBathActive();if(typeof refreshBathChips==="function")refreshBathChips();});
+(function(){const host=$("bathChips");for(const s of BATH_LIST){const c=document.createElement("div");c.className="chip";c.dataset.sp=s;
+  c.addEventListener("click",()=>{bathEnabled[s]=!bathEnabled[s];updBathActive();refreshBathChips();if(bathEnabled[s])maintainBath();if(!running)draw();});
+  host.appendChild(c);}
+  const sh=$("bathScenarios");for(const [key,sc] of Object.entries(BATH_SCENARIOS)){const c=document.createElement("div");c.className="chip"+(key===bathScenario?" on":"");c.dataset.k=key;c.textContent=sc.label;
+    c.addEventListener("click",()=>{bathScenario=key;[...sh.children].forEach(ch=>ch.classList.toggle("on",ch.dataset.k===key));
+      for(const s of BATH_LIST)bathEnabled[s]=(sc.frac[s]||0)>0;                 // enable the scenario's species
+      updBathActive();refreshBathChips();maintainBath();if(!running)draw();});
+    sh.appendChild(c);}
+  refreshBathChips();})();
+// persistence mechanisms
+bind("dryPer","dryPerV",v=>`${v}`,v=>dryPeriod=v);
+bind("minCat","minCatV",v=>v.toFixed(2),v=>mineralCat=v);
+bind("condStab","condStabV",v=>`${v} kJ`,v=>condStab=v);
+bind("dil","dilV",v=>v.toFixed(3),v=>dilution=v);
+bind("dischRate","dischRateV",v=>v.toFixed(3),v=>dischargeRate=v);
+bind("fuelTgt","fuelTgtV",v=>`${v}`,v=>fuelTarget=v);
+bind("wasteOut","wasteOutV",v=>v.toFixed(2),v=>wasteOut=v);
+(function(){const w=$("wetdrySwitch");w.addEventListener("click",()=>{wetdry=!wetdry;w.classList.toggle("on",wetdry);$("wetdryState").textContent=wetdry?"ON":"OFF";if(!running)draw();});
+  const m=$("mineralSwitch");m.addEventListener("click",()=>{mineral=!mineral;m.classList.toggle("on",mineral);$("mineralState").textContent=mineral?"ON":"OFF";if(!running)draw();});
+  const d=$("dischargeSwitch");d.addEventListener("click",()=>{discharge=!discharge;d.classList.toggle("on",discharge);$("dischargeState").textContent=discharge?"ON":"OFF";if(!running)draw();});
+  const fu=$("fuelSwitch");fu.addEventListener("click",()=>{fuelOn=!fuelOn;fu.classList.toggle("on",fuelOn);$("fuelState").textContent=fuelOn?"ON":"OFF";if(fuelOn)maintainFuel();if(!running)draw();});})();
+reset();
 </script>
 </body>
 </html>
